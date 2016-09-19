@@ -40,11 +40,17 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
+    # ------------------------------------------------------------------------------------
+    #                                   Global Variables
+    # ------------------------------------------------------------------------------------
+    # self.logic = GroupsLogic()
+    
+
     # ----- Create an input box that will allow selecting files from the system. And display the filename ----- 
 
     # Collapsible button
     inputCollapsibleButton = ctk.ctkCollapsibleButton()
-    inputCollapsibleButton.text = "Inputs"
+    inputCollapsibleButton.text = "One input with QForm Layout"
     self.layout.addWidget(inputCollapsibleButton)
 
     # Layout within the inputs collapsible button
@@ -58,6 +64,45 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     self.inputFormLayout.addRow(self.inputLabel, self.inputBrowseButton)
 
     self.inputBrowseButton.connect('clicked(bool)', self.onInputBrowseButtonClicked)
+
+
+    # ----- Optionally, select data that is loaded in Slicer (surface) using the mrml mechanism and use it to execute the CLI ----- #
+    
+    # Collapsible button
+    self.secondCollapsibleButton = ctk.ctkCollapsibleButton()
+    self.secondCollapsibleButton.text = "Two inputs with QFrame"
+    self.layout.addWidget(self.secondCollapsibleButton)
+
+    # Layout within the second collapsible button
+    self.secondFormLayout = qt.QFormLayout(self.secondCollapsibleButton)
+
+    # the volume selectors
+    self.inputSlicerFrame = qt.QFrame(self.secondCollapsibleButton)
+    self.inputSlicerFrame.setLayout(qt.QHBoxLayout())
+
+    self.secondFormLayout.addWidget(self.inputSlicerFrame)
+
+    self.inputSlicerSelector = qt.QLabel("Input Volume from Slicer: ", self.inputSlicerFrame)
+    self.inputSlicerFrame.layout().addWidget(self.inputSlicerSelector)
+    self.inputSlicerSelector = slicer.qMRMLNodeComboBox(self.inputSlicerFrame)
+    self.inputSlicerSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
+    self.inputSlicerSelector.addEnabled = False
+    self.inputSlicerSelector.removeEnabled = False
+    self.inputSlicerSelector.setMRMLScene( slicer.mrmlScene )
+    self.inputSlicerFrame.layout().addWidget(self.inputSlicerSelector)
+
+    # Personal input 
+
+    self.inputFileFrame = qt.QFrame(self.secondCollapsibleButton)
+    self.inputFileFrame.setLayout(qt.QHBoxLayout())
+    self.secondFormLayout.addWidget(self.inputFileFrame)
+    self.inputFileSelector = qt.QLabel("Input Volume from files: ", self.inputFileFrame)
+    self.inputFileFrame.layout().addWidget(self.inputFileSelector)
+
+    self.inputFileSelector = qt.QPushButton("Browse input")
+    self.inputFileSelector.connect('clicked(bool)', self.onInputFileSelectorClicked)
+    
+    self.inputFileFrame.layout().addWidget(self.inputFileSelector)
 
 
     # Add vertical spacer
@@ -76,7 +121,6 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     if dialog.exec_():
        filename = dialog.selectedFiles()
        f = open(filename[0], 'r')
-       # print "Lama !"
 
        with f:
           data = f.read()
@@ -85,7 +129,21 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
     # qt.QMessageBox.information(slicer.util.mainWindow(), 'Slicer Python', 'Hello World!')
+  def onInputFileSelectorClicked(self):
+    print "Choisis ton path"
+    dialog = qt.QFileDialog()
+    dialog.setFileMode(qt.QFileDialog.ExistingFile)
 
+    dialog.setNameFilter("Text files (*.txt)")
+    dialog.setViewMode(qt.QFileDialog.Detail)
+    
+    if dialog.exec_():
+       filename = dialog.selectedFiles()
+       f = open(filename[0], 'r')
+
+       with f:
+          data = f.read()
+          self.inputFileSelector.setText(filename[0])
 
   def cleanup(self):
     pass
