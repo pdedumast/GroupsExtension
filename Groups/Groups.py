@@ -87,9 +87,18 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     self.inputSlicerSelector.setMRMLScene( slicer.mrmlScene )
     self.inputQFormLayout.addRow(qt.QLabel("Input loaded on Slicer:"), self.inputSlicerSelector)
 
+
+    # ----- 
+    self.inputDirectorySelector = qt.QPushButton("Browse")
+    self.inputDirectorySelector.connect('clicked(bool)', self.onInputDirectorySelectorClicked)
+    self.inputQFormLayout.addRow(qt.QLabel("Choose a directory:"), self.inputDirectorySelector)
+
+    # -----
+
     self.applyButton = qt.QPushButton("Apply")
     self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
     self.inputQVBox.addWidget(self.applyButton)
+
 
     # Add vertical spacer
     self.layout.addStretch(1)
@@ -133,6 +142,16 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
   def onApplyButtonClicked(self):
     print "Function: onApplyButtonClicked"
+
+
+  def onInputDirectorySelectorClicked(self):
+    print "Function: onInputDirectorySelectorClicked"
+    dossier = qt.QFileDialog.getExistingDirectory()
+
+    self.inputDirectorySelector.setText(dossier)
+    # qt.QMessageBox.information(self, "Repertoire", "Vous avez selectionne :\n" + dossier)
+
+  # ---------
 
   def cleanup(self):
     pass
