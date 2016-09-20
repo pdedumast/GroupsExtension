@@ -41,44 +41,27 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     ScriptedLoadableModuleWidget.setup(self)
 
     # ------------------------------------------------------------------------------------
-    #                                   Global Variables
+    self.logic = GroupsLogic()
     # ------------------------------------------------------------------------------------
-    # self.logic = GroupsLogic()
     
-
-    # ----- Create an input box that will allow selecting files from the system. And display the filename ----- 
-
-    # Collapsible button
-    inputCollapsibleButton = ctk.ctkCollapsibleButton()
-    inputCollapsibleButton.text = "One input with QFormLayout"
-    self.layout.addWidget(inputCollapsibleButton)
-
-    # Layout within the inputs collapsible button
-    self.inputFormLayout = qt.QFormLayout(inputCollapsibleButton)
-
-    self.inputLabel = qt.QLabel("Input volume: ")
-
-    self.inputBrowseButton = qt.QPushButton("Browse input")
-    self.inputBrowseButton.toolTip = "Choose path to your input"
-
-    self.inputFormLayout.addRow(self.inputLabel, self.inputBrowseButton)
-
-    self.inputBrowseButton.connect('clicked(bool)', self.onInputBrowseButtonClicked)
-
-
-    # ----- Optionally, select data that is loaded in Slicer (surface) using the mrml mechanism and use it to execute the CLI -----
-    
+    """
+    Create an input box that will allow selecting files from the system. And display the filename
+    Optionally, select data that is loaded in Slicer (surface) using the mrml mechanism and use it to execute the CLI
+    Create an input box that will allow selecting a directory from the system
+    """
     self.secondCollapsibleButton = ctk.ctkCollapsibleButton()
-    self.secondCollapsibleButton.text = "Two different inputs with QFormLayout"
+    self.secondCollapsibleButton.text = "Different inputs"
     self.layout.addWidget(self.secondCollapsibleButton)
 
     self.inputQVBox = qt.QVBoxLayout(self.secondCollapsibleButton)
     self.inputQFormLayout = qt.QFormLayout()
     self.inputQVBox.addLayout(self.inputQFormLayout)
 
+    # Input box to select file from the system
     self.inputFileSelector = qt.QPushButton("Browse")
     self.inputFileSelector.connect('clicked(bool)', self.onInputFileSelectorClicked)
-    self.inputQFormLayout.addRow(qt.QLabel("Input from system:"), self.inputFileSelector)
+    self.inputFileSelector.toolTip = "Choose path to your input"
+    self.inputQFormLayout.addRow(qt.QLabel("Input text file from system:"), self.inputFileSelector)
 
     self.inputSlicerSelector = slicer.qMRMLNodeComboBox()
     self.inputSlicerSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
@@ -87,42 +70,45 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     self.inputSlicerSelector.setMRMLScene( slicer.mrmlScene )
     self.inputQFormLayout.addRow(qt.QLabel("Input loaded on Slicer:"), self.inputSlicerSelector)
 
-
-    # ----- 
     self.inputDirectorySelector = qt.QPushButton("Browse")
     self.inputDirectorySelector.connect('clicked(bool)', self.onInputDirectorySelectorClicked)
-    self.inputQFormLayout.addRow(qt.QLabel("Choose a directory:"), self.inputDirectorySelector)
+    self.inputQFormLayout.addRow(qt.QLabel("Input a directory from system:"), self.inputDirectorySelector)
 
-    # -----
+    """
+    Collapsible part for input/output parameters for Groups CLI 
+    """
+    self.ioCollapsibleButton = ctk.ctkCollapsibleButton()
+    self.ioCollapsibleButton.text = "IO"
+    self.layout.addWidget(self.ioCollapsibleButton)
 
+    self.ioQVBox = qt.QVBoxLayout(self.ioCollapsibleButton)
+    self.ioQFormLayout = qt.QFormLayout()
+    self.ioQVBox.addLayout(self.ioQFormLayout)
+
+    # Selection of the directory containing the input models
+    self.inputModelsDirectorySelector = qt.QPushButton("Browse")
+    self.inputModelsDirectorySelector.connect('clicked(bool)', self.onInputModelsDirectorySelectorClicked)
+    self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputModelsDirectorySelector)
+
+    # Selection of the input directory containing the property files from SPHARM (txt files)
+    self.inputPropertyDirectorySelector = qt.QPushButton("Browse")
+    self.inputPropertyDirectorySelector.connect('clicked(bool)', self.onInputPropertyDirectorySelectorClicked)
+    self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
+
+    # Selection of the output directory for Groups
+    self.outputDirectorySelector = qt.QPushButton("Browse")
+    self.outputDirectorySelector.connect('clicked(bool)', self.onOutputDirectorySelectorClicked)
+    self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
+
+    # Apply button, to launch the CLI
     self.applyButton = qt.QPushButton("Apply")
     self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
-    self.inputQVBox.addWidget(self.applyButton)
+    self.ioQVBox.addWidget(self.applyButton)
 
 
     # Add vertical spacer
     self.layout.addStretch(1)
 
-
-  def onInputBrowseButtonClicked(self):
-    print "Function: onInputBrowseButtonClicked"
-    # dialog = qt.QFileDialog(self, qt.QString('Open Directory'), qt.QString('/home'))    
-    dialog = qt.QFileDialog()
-    dialog.setFileMode(qt.QFileDialog.ExistingFile)
-
-    dialog.setNameFilter("Text files (*.txt)")
-    dialog.setViewMode(qt.QFileDialog.Detail)
-    
-    if dialog.exec_():
-       filename = dialog.selectedFiles()
-       f = open(filename[0], 'r')
-
-       with f:
-          data = f.read()
-          self.inputBrowseButton.setText(filename[0])
-          # info = qt.QFileInfo(filename[0])
-
-    # qt.QMessageBox.information(slicer.util.mainWindow(), 'Slicer Python', 'Hello World!')
   
   def onInputFileSelectorClicked(self):
     print "Function: onInputFileSelectorClicked"
@@ -134,22 +120,35 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     
     if dialog.exec_():
        filename = dialog.selectedFiles()
-       f = open(filename[0], 'r')
+       f = open(filename, 'r')
 
        with f:
           data = f.read()
-          self.inputFileSelector.setText(filename[0])
+          self.inputFileSelector.setText(filename)
 
   def onApplyButtonClicked(self):
     print "Function: onApplyButtonClicked"
 
-
   def onInputDirectorySelectorClicked(self):
     print "Function: onInputDirectorySelectorClicked"
-    dossier = qt.QFileDialog.getExistingDirectory()
+    self.inputDirectory = qt.QFileDialog.getExistingDirectory()
+    self.inputDirectorySelector.setText(self.inputDirectory)
 
-    self.inputDirectorySelector.setText(dossier)
-    # qt.QMessageBox.information(self, "Repertoire", "Vous avez selectionne :\n" + dossier)
+
+  def onInputModelsDirectorySelectorClicked(self):
+    print "Function: onInputModelsDirectorySelectorClicked"
+    self.inputModelsDirectory = qt.QFileDialog.getExistingDirectory()
+    self.inputModelsDirectorySelector.setText(self.inputModelsDirectory)
+
+  def onInputPropertyDirectorySelectorClicked(self):
+    print "Function: onInputPropertyDirectorySelectorClicked"
+    self.inputPropertyDirectory = qt.QFileDialog.getExistingDirectory()
+    self.inputPropertyDirectorySelector.setText(self.inputPropertyDirectory)
+
+  def onOutputDirectorySelectorClicked(self):
+    print "Function: onOutputDirectorySelectorClicked"
+    self.outputDirectory = qt.QFileDialog.getExistingDirectory()
+    self.outputDirectorySelector.setText(self.outputDirectory)
 
   # ---------
 
