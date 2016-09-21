@@ -111,7 +111,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
   
   def onInputFileSelectorClicked(self):
-    print "Function: onInputFileSelectorClicked"
+    print " Input File Selector"
     dialog = qt.QFileDialog()
     dialog.setFileMode(qt.QFileDialog.ExistingFile)
 
@@ -126,29 +126,43 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
           data = f.read()
           self.inputFileSelector.setText(filename)
 
-  def onApplyButtonClicked(self):
-    print "Function: onApplyButtonClicked"
-
   def onInputDirectorySelectorClicked(self):
-    print "Function: onInputDirectorySelectorClicked"
+    print "Input Directory"
     self.inputDirectory = qt.QFileDialog.getExistingDirectory()
     self.inputDirectorySelector.setText(self.inputDirectory)
 
-
+  # --- Slot for the extension's buttons
   def onInputModelsDirectorySelectorClicked(self):
-    print "Function: onInputModelsDirectorySelectorClicked"
-    self.inputModelsDirectory = qt.QFileDialog.getExistingDirectory()
-    self.inputModelsDirectorySelector.setText(self.inputModelsDirectory)
+    print "Input Models Directory"
+    self.inputModelsDirectory = qt.QFileDialog()
+    self.inputModelsDirectory.setFileMode(qt.QFileDialog.Directory)
+
+    if self.inputModelsDirectory.exec_():
+      filename = self.inputModelsDirectory.selectedFiles()[0]
+      self.inputModelsDirectorySelector.setText(filename)
+    elif not self.inputModelsDirectory.result() :
+      print "Aucun repertoire selectionne"
 
   def onInputPropertyDirectorySelectorClicked(self):
-    print "Function: onInputPropertyDirectorySelectorClicked"
-    self.inputPropertyDirectory = qt.QFileDialog.getExistingDirectory()
-    self.inputPropertyDirectorySelector.setText(self.inputPropertyDirectory)
+    print "Input Property Directory"
+    self.inputPropertyDirectory = qt.QFileDialog()
+    self.inputPropertyDirectory.setFileMode(qt.QFileDialog.Directory)
+
+    if self.inputPropertyDirectory.exec_():
+      filename = self.inputPropertyDirectory.selectedFiles()[0]
+      self.inputPropertyDirectorySelector.setText(filename)
 
   def onOutputDirectorySelectorClicked(self):
-    print "Function: onOutputDirectorySelectorClicked"
-    self.outputDirectory = qt.QFileDialog.getExistingDirectory()
-    self.outputDirectorySelector.setText(self.outputDirectory)
+    print "Output Directory"
+    self.outputDirectory = qt.QFileDialog()
+    self.outputDirectory.setFileMode(qt.QFileDialog.Directory)
+
+    if self.outputDirectory.exec_():
+      filename = self.outputDirectory.selectedFiles()[0]
+      self.outputDirectorySelector.setText(filename)
+
+  def onApplyButtonClicked(self):
+    print "Apply Button"
 
   # ---------
 
