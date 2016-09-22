@@ -18,7 +18,7 @@ class Groups(ScriptedLoadableModule):
     self.parent.title = "Groups" # TODO make this more human readable by adding spaces
     self.parent.categories = ["Correspondence"]
     self.parent.dependencies = []
-    self.parent.contributors = ["Priscille de Dumast (University of Michigan)"]
+    self.parent.contributors = ["Priscille de Dumast (University of Michigan), Ilwoo Lyu (UNC), Hamid Ali (UNC)"]
     self.parent.helpText = """
     This is an example of scripted loadable module bundled in an extension.
     It performs a simple thresholding on the input volume and optionally captures a screenshot.
@@ -40,40 +40,6 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
 
-    # ------------------------------------------------------------------------------------
-    self.logic = GroupsLogic()
-    # ------------------------------------------------------------------------------------
-    
-    """
-    Create an input box that will allow selecting files from the system. And display the filename
-    Optionally, select data that is loaded in Slicer (surface) using the mrml mechanism and use it to execute the CLI
-    Create an input box that will allow selecting a directory from the system
-    """
-    self.secondCollapsibleButton = ctk.ctkCollapsibleButton()
-    self.secondCollapsibleButton.text = "Different inputs"
-    self.layout.addWidget(self.secondCollapsibleButton)
-
-    self.inputQVBox = qt.QVBoxLayout(self.secondCollapsibleButton)
-    self.inputQFormLayout = qt.QFormLayout()
-    self.inputQVBox.addLayout(self.inputQFormLayout)
-
-    # Input box to select file from the system
-    self.inputFileSelector = qt.QPushButton("Browse")
-    self.inputFileSelector.connect('clicked(bool)', self.onInputFileSelectorClicked)
-    self.inputFileSelector.toolTip = "Choose path to your input"
-    self.inputQFormLayout.addRow(qt.QLabel("Input text file from system:"), self.inputFileSelector)
-
-    self.inputSlicerSelector = slicer.qMRMLNodeComboBox()
-    self.inputSlicerSelector.nodeTypes = ( ("vtkMRMLScalarVolumeNode"), "" )
-    self.inputSlicerSelector.addEnabled = False
-    self.inputSlicerSelector.removeEnabled = False
-    self.inputSlicerSelector.setMRMLScene( slicer.mrmlScene )
-    self.inputQFormLayout.addRow(qt.QLabel("Input loaded on Slicer:"), self.inputSlicerSelector)
-
-    self.inputDirectorySelector = qt.QPushButton("Browse")
-    self.inputDirectorySelector.connect('clicked(bool)', self.onInputDirectorySelectorClicked)
-    self.inputQFormLayout.addRow(qt.QLabel("Input a directory from system:"), self.inputDirectorySelector)
-
     """
     Collapsible part for input/output parameters for Groups CLI 
     """
@@ -86,97 +52,47 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     self.ioQVBox.addLayout(self.ioQFormLayout)
 
     # Selection of the directory containing the input models
-    self.inputModelsDirectorySelector = qt.QPushButton("Browse")
-    self.inputModelsDirectorySelector.connect('clicked(bool)', self.onInputModelsDirectorySelectorClicked)
+    self.inputModelsDirectorySelector = ctk.ctkDirectoryButton()
     self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputModelsDirectorySelector)
 
     # Selection of the input directory containing the property files from SPHARM (txt files)
-    self.inputPropertyDirectorySelector = qt.QPushButton("Browse")
-    self.inputPropertyDirectorySelector.connect('clicked(bool)', self.onInputPropertyDirectorySelectorClicked)
+    self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
     self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
 
     # Selection of the output directory for Groups
-    self.outputDirectorySelector = qt.QPushButton("Browse")
-    self.outputDirectorySelector.connect('clicked(bool)', self.onOutputDirectorySelectorClicked)
+    self.outputDirectorySelector = ctk.ctkDirectoryButton()
     self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
     # Apply button, to launch the CLI
     self.applyButton = qt.QPushButton("Apply")
+    self.applyButton.enabled = False
     self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
     self.ioQVBox.addWidget(self.applyButton)
 
+    # Connections
+    self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
+    self.inputModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
+    self.inputPropertyDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
+    self.outputDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
 
     # Add vertical spacer
     self.layout.addStretch(1)
-
-  
-  def onInputFileSelectorClicked(self):
-    print " Input File Selector"
-    dialog = qt.QFileDialog()
-    dialog.setFileMode(qt.QFileDialog.ExistingFile)
-
-    dialog.setNameFilter("Text files (*.txt)")
-    dialog.setViewMode(qt.QFileDialog.Detail)
-    
-    if dialog.exec_():
-       filename = dialog.selectedFiles()
-       f = open(filename, 'r')
-
-       with f:
-          data = f.read()
-          self.inputFileSelector.setText(filename)
-
-  def onInputDirectorySelectorClicked(self):
-    print "Input Directory"
-    self.inputDirectory = qt.QFileDialog.getExistingDirectory()
-    self.inputDirectorySelector.setText(self.inputDirectory)
-
-  # --- Slot for the extension's buttons
-  def onInputModelsDirectorySelectorClicked(self):
-    print "Input Models Directory"
-    self.inputModelsDirectory = qt.QFileDialog()
-    self.inputModelsDirectory.setFileMode(qt.QFileDialog.Directory)
-
-    if self.inputModelsDirectory.exec_():
-      filename = self.inputModelsDirectory.selectedFiles()[0]
-      self.inputModelsDirectorySelector.setText(filename)
-    elif not self.inputModelsDirectory.result() :
-      print "Aucun repertoire selectionne"
-
-  def onInputPropertyDirectorySelectorClicked(self):
-    print "Input Property Directory"
-    self.inputPropertyDirectory = qt.QFileDialog()
-    self.inputPropertyDirectory.setFileMode(qt.QFileDialog.Directory)
-
-    if self.inputPropertyDirectory.exec_():
-      filename = self.inputPropertyDirectory.selectedFiles()[0]
-      self.inputPropertyDirectorySelector.setText(filename)
-
-  def onOutputDirectorySelectorClicked(self):
-    print "Output Directory"
-    self.outputDirectory = qt.QFileDialog()
-    self.outputDirectory.setFileMode(qt.QFileDialog.Directory)
-
-    if self.outputDirectory.exec_():
-      filename = self.outputDirectory.selectedFiles()[0]
-      self.outputDirectorySelector.setText(filename)
-
-  def onApplyButtonClicked(self):
-    print "Apply Button"
-
-  # ---------
 
   def cleanup(self):
     pass
 
   def onSelect(self):
-    self.applyButton.enabled = self.inputSelector.currentNode() and self.outputSelector.currentNode()
+    checkInputModels = (self.inputModelsDirectorySelector.directory != ".")
+    checkInputProperty = (self.inputPropertyDirectorySelector.directory != ".")
+    checkOutput = (self.outputDirectorySelector.directory != ".")
+    self.applyButton.enabled = checkInputModels and checkInputProperty and checkOutput
 
-  def onApplyButton(self):
+  def onApplyButtonClicked(self):
+    print "Apply Button"
     logic = GroupsLogic()
-    enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
-    imageThreshold = self.imageThresholdSliderWidget.value
-    logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
+    logic.run()
+
+
 
 #
 # GroupsLogic
@@ -256,28 +172,30 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
     annotationLogic = slicer.modules.annotations.logic()
     annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
-  def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
-    """
-    Run the actual algorithm
-    """
+  # def run(self, inputVolume, outputVolume, imageThreshold, enableScreenshots=0):
+  #   """
+  #   Run the actual algorithm
+  #   """
 
-    if not self.isValidInputOutputData(inputVolume, outputVolume):
-      slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
-      return False
+  #   if not self.isValidInputOutputData(inputVolume, outputVolume):
+  #     slicer.util.errorDisplay('Input volume is the same as output volume. Choose a different output volume.')
+  #     return False
 
-    logging.info('Processing started')
+  #   logging.info('Processing started')
 
-    # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
-    cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
-    cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
+  #   # Compute the thresholded output volume using the Threshold Scalar Volume CLI module
+  #   cliParams = {'InputVolume': inputVolume.GetID(), 'OutputVolume': outputVolume.GetID(), 'ThresholdValue' : imageThreshold, 'ThresholdType' : 'Above'}
+  #   cliNode = slicer.cli.run(slicer.modules.thresholdscalarvolume, None, cliParams, wait_for_completion=True)
 
-    # Capture screenshot
-    if enableScreenshots:
-      self.takeScreenshot('GroupsTest-Start','MyScreenshot',-1)
+  #   # Capture screenshot
+  #   if enableScreenshots:
+  #     self.takeScreenshot('GroupsTest-Start','MyScreenshot',-1)
 
-    logging.info('Processing completed')
+  #   logging.info('Processing completed')
 
-    return True
+  #   return True
+  def run(self):
+    print "--- Run ---"
 
 
 class GroupsTest(ScriptedLoadableModuleTest):
