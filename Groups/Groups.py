@@ -48,10 +48,14 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.ioCollapsibleButton = ctk.ctkCollapsibleButton()
         self.ioCollapsibleButton.text = "IO"
         self.layout.addWidget(self.ioCollapsibleButton)
-
         self.ioQVBox = qt.QVBoxLayout(self.ioCollapsibleButton)
-        self.ioQFormLayout = qt.QFormLayout()
-        self.ioQVBox.addLayout(self.ioQFormLayout)
+
+        # --------------------------------- #
+        # ----- Group Box DIRECTORIES ----- #
+        # --------------------------------- #
+        self.directoryGroupBox = qt.QGroupBox("Directories")
+        self.ioQVBox.addWidget(self.directoryGroupBox)
+        self.ioQFormLayout = qt.QFormLayout(self.directoryGroupBox)
 
         # Selection of the directory containing the input models
         self.inputModelsDirectorySelector = ctk.ctkDirectoryButton()
@@ -65,13 +69,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
-        # Apply button, to launch the CLI
-        self.applyButton = qt.QPushButton("Apply")
-        self.applyButton.enabled = False
-        self.ioQVBox.addWidget(self.applyButton)
-
         # Connections
-        self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
         self.inputModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.inputPropertyDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.outputDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
@@ -81,21 +79,61 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
-        # Add vertical spacer
+        # -------------------------------- #
+        # ----- Group Box PARAMETERS ----- #
+        # -------------------------------- #
+        self.parametersGroupBox = qt.QGroupBox("Parameters")
+        self.ioQVBox.addWidget(self.parametersGroupBox)
+        self.paramQFormLayout = qt.QFormLayout(self.parametersGroupBox)
+
+        # Selection of the property we want to use
+        self.specifyPropertySelector = ctk.ctkComboBox()
+        self.specifyPropertySelector.addItems(("H", "C", "..."))
+        self.paramQFormLayout.addRow(qt.QLabel("Property name to use:"), self.specifyPropertySelector)
+
+        # Name simplification
+        self.property = self.specifyPropertySelector.currentText
+
+        # Connections
+        self.specifyPropertySelector.connect("currentIndexChanged(int)", self.onSpecifyPropertyChanged)
+
+        # ------------------------------------------ #
+        # ----- Apply button to launch the CLI ----- #
+        # ------------------------------------------ #
+        self.applyButton = qt.QPushButton("Apply")
+        self.applyButton.enabled = False
+        self.ioQVBox.addWidget(self.applyButton)
+
+        # Connections
+        self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
+
+        # ----- Add vertical spacer ----- #
         self.layout.addStretch(1)
 
+    ## Function cleanup(self):
     def cleanup(self):
         pass
 
+    ## Function onSelect(self):
+    # Check if each directory (Models, Property, Output) have been choosen.
+    # If they were, Apply button is enabled to call the CLI
+    # Update the simplified names
     def onSelect(self):
         # Update names
         self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
         self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
-        # Check if each
+        # Check if each directory has been choosen
         self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "."
 
+    ## Function onSelect(self):
+    # Update the specify property
+    def onSpecifyPropertyChanged(self):
+        self.property = self.specifyPropertySelector.currentText
+
+    ## Function onApplyButtonClicked(self):
+    #
     def onApplyButtonClicked(self):
         logic = GroupsLogic()
         logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
@@ -181,7 +219,6 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         annotationLogic = slicer.modules.annotations.logic()
         annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
-
     def runGroups(self, modelsDir, propertyDir, outputDir):
         print "--- function runGroups() ---"
 
@@ -225,7 +262,6 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         # print "error: " + str(process.error())
 
         return True
-
 
 
 class GroupsTest(ScriptedLoadableModuleTest):
