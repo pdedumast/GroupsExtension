@@ -69,10 +69,16 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
+        # CheckBox. If checked, Group Box parameters will be enabled
+        self.enableParamCB = ctk.ctkCheckBox()
+        self.enableParamCB.setText("Personalize parameters")
+        self.ioQFormLayout.addRow(self.enableParamCB)
+
         # Connections
         self.inputModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.inputPropertyDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.outputDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
+        self.enableParamCB.connect("stateChanged(int)", self.onCheckBoxParam)
 
         # Name simplification (string)
         self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
@@ -86,16 +92,39 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.ioQVBox.addWidget(self.parametersGroupBox)
         self.paramQFormLayout = qt.QFormLayout(self.parametersGroupBox)
 
+        self.parametersGroupBox.setEnabled(False)
+
         # Selection of the property we want to use
-        self.specifyPropertySelector = ctk.ctkComboBox()
+        self.specifyPropertySelector = ctk.ctkCheckableComboBox()
         self.specifyPropertySelector.addItems(("H", "C", "..."))
-        self.paramQFormLayout.addRow(qt.QLabel("Property name to use:"), self.specifyPropertySelector)
+        self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
+
+        # Selection of the directory which contains each spherical model (option -alignedSphere)
+        self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
+        self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
+
+        # Specification of the SPHARM decomposition degree
+        self.degreeSpharm = ctk.ctkSliderWidget()
+        self.degreeSpharm.minimum = 0
+        self.degreeSpharm.maximum = 50
+        self.degreeSpharm.value = 10        # initial value
+        # le pas !
+        self.paramQFormLayout.addRow(qt.QLabel("Degree of SPHARM decomposition:"), self.degreeSpharm)
+
+        # Selection of the directory which contains each spherical model (option -alignedSphere)
+        self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
+        self.paramQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
+
+        # Maximum iteration
+        self.maxIter = ctk.ctkDoubleSpinBox()
+        self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
 
         # Name simplification
-        self.property = self.specifyPropertySelector.currentText
+        # self.property = self.specifyPropertySelector.currentText
 
         # Connections
-        self.specifyPropertySelector.connect("currentIndexChanged(int)", self.onSpecifyPropertyChanged)
+        self.specifyPropertySelector.connect("checkedIndexesChanged()", self.onSpecifyPropertyChanged)
+
 
         # ------------------------------------------ #
         # ----- Apply button to launch the CLI ----- #
@@ -130,11 +159,31 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     ## Function onSelect(self):
     # Update the specify property
     def onSpecifyPropertyChanged(self):
-        self.property = self.specifyPropertySelector.currentText
+        # self.index = self.specifyPropertySelector.checkedIndexes()
+        print "Recuperer les options selectionnees "
+        # Charger les options cochees !!!
+
+
+    ## Function onCheckBoxParam(self):
+    # Enable the parameter Group Box if check boc checked
+    def onCheckBoxParam(self):
+        if self.enableParamCB.checkState():
+            self.parametersGroupBox.setEnabled(True)
+        else:
+            self.parametersGroupBox.setEnabled(False)
 
     ## Function onApplyButtonClicked(self):
-    #
+        # Update every parameters
+        # Check directories are ok
+        # Check maxIter > minIter
+        # Check if parameters group box enabled
     def onApplyButtonClicked(self):
+
+
+
+        # if self.enableParamCB.checkState():
+
+
         logic = GroupsLogic()
         logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
 
@@ -219,7 +268,11 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         annotationLogic = slicer.modules.annotations.logic()
         annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
-    def runGroups(self, modelsDir, propertyDir, outputDir):
+
+    ## Functiun runGroups(...)
+    #
+    #
+    def runGroups(self, modelsDir, propertyDir, outputDir):          #, degree=0, propertyType=0, sphericalModelDir=0):
         print "--- function runGroups() ---"
 
         """
@@ -252,10 +305,24 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         arguments.append("-o")
         arguments.append(outputDir)
 
-        # ----- Call to the CLI -----
-        process = qt.QProcess()
-        print "Calling " + os.path.basename(groups)
-        process.start(groups, arguments)
+        # if degree:
+        #     arguments.append("-d")
+        #     arguments.append(degree)
+        #
+        # if propertyType:
+        #     arguments.append("-x")
+        #     arguments.append(propertyType)
+        #
+        # if sphericalModelDir and sphericalModelDir != ".":
+        #     arguments.append("-alignedSphere")
+        #     arguments.append(sphericalModelDir)
+
+        # print arguments
+
+        # # ----- Call to the CLI -----
+        # process = qt.QProcess()
+        # print "Calling " + os.path.basename(groups)
+        # process.start(groups, arguments)
         # process.waitForStarted()
         # print "state: " + str(process.state())
         # process.waitForFinished()
