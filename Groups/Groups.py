@@ -119,6 +119,61 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.maxIter = ctk.ctkDoubleSpinBox()
         self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
 
+        # Weights of each property - Choice on 2 lines
+        self.weightLayout = qt.QVBoxLayout(self.parametersGroupBox)
+
+        self.weightline1 = qt.QHBoxLayout(self.parametersGroupBox)      # Line 1
+        self.weightLayout.addLayout(self.weightline1)
+        self.weightline2 = qt.QHBoxLayout(self.parametersGroupBox)      # Line 2
+        self.weightLayout.addLayout(self.weightline2)
+
+        # Fill out first line
+        self.labelC = qt.QLabel("C")
+        self.weightline1.addWidget(self.labelC)
+        self.weightC = ctk.ctkDoubleSpinBox()
+        self.weightC.enabled = False
+        self.weightC.value = 1
+        self.weightline1.addWidget(self.weightC)
+
+        self.labelH = qt.QLabel("H")
+        self.weightline1.addWidget(self.labelH)
+        self.weightH = ctk.ctkDoubleSpinBox()
+        self.weightH.enabled = False
+        self.weightH.value = 1
+        self.weightline1.addWidget(self.weightH)
+
+        self.labelKappa1 = qt.QLabel("Kappa1")
+        self.weightline1.addWidget(self.labelKappa1)
+        self.weightKappa1 = ctk.ctkDoubleSpinBox()
+        self.weightKappa1.enabled = False
+        self.weightKappa1.value = 1
+        self.weightline1.addWidget(self.weightKappa1)
+
+        # Fill out second line
+        self.labelT = qt.QLabel("T")
+        self.weightline2.addWidget(self.labelT)
+        self.weightT = ctk.ctkDoubleSpinBox()
+        self.weightT.enabled = False
+        self.weightT.value = 1
+        self.weightline2.addWidget(self.weightT)
+
+        self.labelK = qt.QLabel("K")
+        self.weightline2.addWidget(self.labelK)
+        self.weightK = ctk.ctkDoubleSpinBox()
+        self.weightK.enabled = False
+        self.weightK.value = 1
+        self.weightline2.addWidget(self.weightK)
+
+        self.labelKappa2 = qt.QLabel("Kappa1")
+        self.weightline2.addWidget(self.labelKappa2)
+        self.weightKappa2 = ctk.ctkDoubleSpinBox()
+        self.weightKappa2.enabled = False
+        self.weightKappa2.value = 1
+        self.weightline2.addWidget(self.weightKappa2)
+
+
+        self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
+
         # Name simplification
         # self.property = self.specifyPropertySelector.currentText
 
@@ -161,6 +216,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     def onSpecifyPropertyChanged(self):
         # self.index = self.specifyPropertySelector.checkedIndexes()
         print "Recuperer les options selectionnees "
+        print "Enable les poids associes"
         # Charger les options cochees !!!
 
 
