@@ -116,7 +116,9 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.paramQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
 
         # Maximum iteration
-        self.maxIter = ctk.ctkDoubleSpinBox()
+        self.maxIter = qt.QSpinBox()
+        self.maxIter.minimum = 0            # Check the range authorized
+        self.maxIter.maximum = 100000
         self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
 
         # Weights of each property - Choice on 2 lines
@@ -244,12 +246,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     ## Function onApplyButtonClicked(self):
         # Update every parameters
         # Check directories are ok
-        # Check maxIter > minIter
+        # Check maxIter is an integer
         # Check if parameters group box enabled
     def onApplyButtonClicked(self):
+        logic = GroupsLogic()
 
         if not self.enableParamCB.checkState():
-            logic = GroupsLogic()
             logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
 
         else:
@@ -272,8 +274,10 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             if self.specifyPropertySelector.currentIndex == 5:
                 self.property.append(str(self.weightKappa2.value))
 
+            print self.property
             # Update ...
 
+            # logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
 
 
 #
