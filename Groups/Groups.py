@@ -96,7 +96,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Selection of the property we want to use
         self.specifyPropertySelector = ctk.ctkCheckableComboBox()
-        self.specifyPropertySelector.addItems(("H", "C", "..."))
+        self.specifyPropertySelector.addItems(("C","H","Kappa1","T","K","Kappa2"))
         self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
 
         # Selection of the directory which contains each spherical model (option -alignedSphere)
@@ -164,7 +164,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightK.value = 1
         self.weightline2.addWidget(self.weightK)
 
-        self.labelKappa2 = qt.QLabel("Kappa1")
+        self.labelKappa2 = qt.QLabel("Kappa2")
         self.weightline2.addWidget(self.labelKappa2)
         self.weightKappa2 = ctk.ctkDoubleSpinBox()
         self.weightKappa2.enabled = False
@@ -175,7 +175,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
 
         # Name simplification
-        # self.property = self.specifyPropertySelector.currentText
+        self.property = list()
 
         # Connections
         self.specifyPropertySelector.connect("checkedIndexesChanged()", self.onSpecifyPropertyChanged)
@@ -212,12 +212,25 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "."
 
     ## Function onSelect(self):
-    # Update the specify property
+    # Enable associated weights
     def onSpecifyPropertyChanged(self):
-        # self.index = self.specifyPropertySelector.checkedIndexes()
-        print "Recuperer les options selectionnees "
-        print "Enable les poids associes"
-        # Charger les options cochees !!!
+        if self.specifyPropertySelector.currentIndex == 0:
+            self.weightC.enabled = not self.weightC.enabled
+
+        if self.specifyPropertySelector.currentIndex == 1:
+            self.weightH.enabled = not self.weightH.enabled
+
+        if self.specifyPropertySelector.currentIndex == 2:
+            self.weightKappa1.enabled = not self.weightKappa1.enabled
+
+        if self.specifyPropertySelector.currentIndex == 3:
+            self.weightT.enabled = not self.weightT.enabled
+
+        if self.specifyPropertySelector.currentIndex == 4:
+            self.weightK.enabled = not self.weightK.enabled
+
+        if self.specifyPropertySelector.currentIndex == 5:
+            self.weightKappa2.enabled = not self.weightKappa2.enabled
 
 
     ## Function onCheckBoxParam(self):
@@ -235,13 +248,32 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Check if parameters group box enabled
     def onApplyButtonClicked(self):
 
+        if not self.enableParamCB.checkState():
+            logic = GroupsLogic()
+            logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
 
+        else:
+            # Update specified properties
+            if self.specifyPropertySelector.currentIndex == 0:
+                self.property.append(str(self.weightC.value))
 
-        # if self.enableParamCB.checkState():
+            if self.specifyPropertySelector.currentIndex == 1:
+                self.property.append(str(self.weightH.value))
 
+            if self.specifyPropertySelector.currentIndex == 2:
+                self.property.append(str(self.weightKappa1.value))
 
-        logic = GroupsLogic()
-        logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
+            if self.specifyPropertySelector.currentIndex == 3:
+                self.property.append(str(self.weightT.value))
+
+            if self.specifyPropertySelector.currentIndex == 4:
+                self.property.append(str(self.weightK.value))
+
+            if self.specifyPropertySelector.currentIndex == 5:
+                self.property.append(str(self.weightKappa2.value))
+
+            # Update ...
+
 
 
 #
