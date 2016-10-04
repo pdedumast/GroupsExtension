@@ -57,15 +57,15 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.ioQVBox.addWidget(self.directoryGroupBox)
         self.ioQFormLayout = qt.QFormLayout(self.directoryGroupBox)
 
-        # Selection of the directory containing the input models
+        # Selection of the directory containing the input models (option: -i, then --surfaceDir)
         self.inputModelsDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputModelsDirectorySelector)
 
-        # Selection of the input directory containing the property files from SPHARM (txt files)
+        # Selection of the input directory containing the property files from SPHARM (txt files) (option: -p, then --propertyDir)
         self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
 
-        # Selection of the output directory for Groups
+        # Selection of the output directory for Groups (option: -o, then --outputDir)
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
@@ -94,39 +94,17 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         self.parametersGroupBox.setEnabled(False)
 
-        # Selection of the property we want to use
+        # Selection of the property we want to use (option: -x, then --filter)
         self.specifyPropertySelector = ctk.ctkCheckableComboBox()
         self.specifyPropertySelector.addItems(("C","H","Kappa1","T","K","Kappa2"))
         self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
 
-        # Selection of the directory which contains each spherical model (option -alignedSphere)
-        self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
-        self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
-
-        # Specification of the SPHARM decomposition degree
-        self.degreeSpharm = ctk.ctkSliderWidget()
-        self.degreeSpharm.minimum = 0
-        self.degreeSpharm.maximum = 50
-        self.degreeSpharm.value = 10        # initial value
-        # le pas !
-        self.paramQFormLayout.addRow(qt.QLabel("Degree of SPHARM decomposition:"), self.degreeSpharm)
-
-        # Selection of the directory which contains each spherical model (option -alignedSphere)
-        self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
-        self.paramQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
-
-        # Maximum iteration
-        self.maxIter = qt.QSpinBox()
-        self.maxIter.minimum = 0            # Check the range authorized
-        self.maxIter.maximum = 100000
-        self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
-
-        # Weights of each property - Choice on 2 lines
+        # Weights of each property - Choices on 2 lines (option: ??, then -w)
         self.weightLayout = qt.QVBoxLayout(self.parametersGroupBox)
 
-        self.weightline1 = qt.QHBoxLayout(self.parametersGroupBox)      # Line 1
+        self.weightline1 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 1
         self.weightLayout.addLayout(self.weightline1)
-        self.weightline2 = qt.QHBoxLayout(self.parametersGroupBox)      # Line 2
+        self.weightline2 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 2
         self.weightLayout.addLayout(self.weightline2)
 
         # Fill out first line
@@ -173,11 +151,33 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightKappa2.value = 1
         self.weightline2.addWidget(self.weightKappa2)
 
-
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
 
+        # Selection of the directory which contains each spherical model (option: -??, then --landmarkDir)
+        self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
+        self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
+
+        # Specification of the SPHARM decomposition degree (option: -d)
+        self.degreeSpharm = ctk.ctkSliderWidget()
+        self.degreeSpharm.minimum = 0
+        self.degreeSpharm.maximum = 50
+        self.degreeSpharm.value = 5        # initial value
+        self.degreeSpharm.setDecimals(0)
+        self.paramQFormLayout.addRow(qt.QLabel("Degree of SPHARM decomposition:"), self.degreeSpharm)
+
+        # Selection of the directory which contains each spherical model (option: -alignedSphere, then --sphereDir)
+        self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
+        self.paramQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
+
+        # Maximum iteration (option: ??, then --maxIter)
+        self.maxIter = qt.QSpinBox()
+        self.maxIter.minimum = 0            # Check the range authorized
+        self.maxIter.maximum = 100000
+        self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
+
         # Name simplification
-        self.property = list()
+        self.property = ""
+        self.propertyValue = ""
 
         # Connections
         self.specifyPropertySelector.connect("checkedIndexesChanged()", self.onSpecifyPropertyChanged)
@@ -255,29 +255,74 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
 
         else:
-            # Update specified properties
-            if self.specifyPropertySelector.currentIndex == 0:
-                self.property.append(str(self.weightC.value))
+            # ----- Creation of string for the specified properties and their values -----
+            self.property = ""
+            self.propertyValue = ""
 
-            if self.specifyPropertySelector.currentIndex == 1:
-                self.property.append(str(self.weightH.value))
+            if self.weightC.enabled:
+                self.propertyValue = self.propertyValue + str(self.weightC.value)
+                self.property = self.property + "C.txt"
 
-            if self.specifyPropertySelector.currentIndex == 2:
-                self.property.append(str(self.weightKappa1.value))
+            if self.weightH.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
 
-            if self.specifyPropertySelector.currentIndex == 3:
-                self.property.append(str(self.weightT.value))
+                self.propertyValue = self.propertyValue + str(self.weightH.value)
+                self.property = self.property + "H.txt"
 
-            if self.specifyPropertySelector.currentIndex == 4:
-                self.property.append(str(self.weightK.value))
+            if self.weightKappa1.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
 
-            if self.specifyPropertySelector.currentIndex == 5:
-                self.property.append(str(self.weightKappa2.value))
+                self.propertyValue = self.propertyValue + str(self.weightKappa1.value)
+                self.property = self.property + "Kappa1.txt"
 
+            if self.weightT.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
+
+                self.propertyValue = self.propertyValue + str(self.weightT.value)
+                self.property = self.property + "T.txt"
+
+            if self.weightK.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
+
+                self.propertyValue = self.propertyValue + str(self.weightK.value)
+                self.property = self.property + "K.txt"
+
+            if self.weightKappa2.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
+
+                self.propertyValue = self.propertyValue + str(self.weightKappa2.value)
+                self.property = self.property + "Kappa2.txt"
+
+            if self.property == "":
+                self.property = 0
+            if self.propertyValue == "":
+                self.propertyValue = 0
+
+            print self.propertyValue
             print self.property
-            # Update ...
 
-            # logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
+            if self.landmarkDirectorySelector.directory == ".":
+                landmark = 0
+            else:
+                landmark = self.landmarkDirectorySelector.directory
+
+            if self.sphericalModelsDirectorySelector.directory == ".":
+                sphereDir = 0
+            else:
+                sphereDir = self.sphericalModelsDirectorySelector.directory
+
+
+            logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory, self.property, self.propertyValue, landmark, self.degreeSpharm.value, sphereDir, self.maxIter.value)
 
 
 #
@@ -364,7 +409,7 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
     ## Functiun runGroups(...)
     #
     #
-    def runGroups(self, modelsDir, propertyDir, outputDir):          #, degree=0, propertyType=0, sphericalModelDir=0):
+    def runGroups(self, modelsDir, propertyDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, sphereDir=0, maxIter=0):
         print "--- function runGroups() ---"
 
         """
@@ -397,19 +442,27 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         arguments.append("-o")
         arguments.append(outputDir)
 
-        # if degree:
-        #     arguments.append("-d")
-        #     arguments.append(degree)
-        #
-        # if propertyType:
-        #     arguments.append("-x")
-        #     arguments.append(propertyType)
-        #
-        # if sphericalModelDir and sphericalModelDir != ".":
-        #     arguments.append("-alignedSphere")
-        #     arguments.append(sphericalModelDir)
+        if properties:
+            arguments.append("-x")
+            arguments.append(properties)
+        if propValues:
+            arguments.append("-w")
+            arguments.append(propValues)
 
-        # print arguments
+        if landmark:
+            arguments.append("-landmarkDir")
+            arguments.append(landmark)
+        if degree:
+            arguments.append("-d")
+            arguments.append(degree)
+        if sphereDir:
+            arguments.append("-sphereDir")
+            arguments.append(sphereDir)
+        if maxIter:
+            arguments.append("-maxIter")
+            arguments.append(maxIter)
+
+        print arguments
 
         # # ----- Call to the CLI -----
         # process = qt.QProcess()
