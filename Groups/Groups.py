@@ -96,7 +96,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Selection of the property we want to use (option: -x, then --filter)
         self.specifyPropertySelector = ctk.ctkCheckableComboBox()
-        self.specifyPropertySelector.addItems(("C","H","Kappa1","T","K","Kappa2"))
+        self.specifyPropertySelector.addItems(("C","H","Kappa1","S","K","Kappa2","DPhi","DTheta"))
         self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
 
         # Weights of each property - Choices on 2 lines (option: ??, then -w)
@@ -106,6 +106,8 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightLayout.addLayout(self.weightline1)
         self.weightline2 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 2
         self.weightLayout.addLayout(self.weightline2)
+        self.weightline3 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 3
+        self.weightLayout.addLayout(self.weightline3)
 
         # Fill out first line
         self.labelC = qt.QLabel("C")
@@ -130,12 +132,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightline1.addWidget(self.weightKappa1)
 
         # Fill out second line
-        self.labelT = qt.QLabel("T")
-        self.weightline2.addWidget(self.labelT)
-        self.weightT = ctk.ctkDoubleSpinBox()
-        self.weightT.enabled = False
-        self.weightT.value = 1
-        self.weightline2.addWidget(self.weightT)
+        self.labelS = qt.QLabel("S")
+        self.weightline2.addWidget(self.labelS)
+        self.weightS = ctk.ctkDoubleSpinBox()
+        self.weightS.enabled = False
+        self.weightS.value = 1
+        self.weightline2.addWidget(self.weightS)
 
         self.labelK = qt.QLabel("K")
         self.weightline2.addWidget(self.labelK)
@@ -150,6 +152,21 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightKappa2.enabled = False
         self.weightKappa2.value = 1
         self.weightline2.addWidget(self.weightKappa2)
+
+        # Fill out third line
+        self.labelDPhi = qt.QLabel("DPhi")
+        self.weightline3.addWidget(self.labelDPhi)
+        self.weightDPhi = ctk.ctkDoubleSpinBox()
+        self.weightDPhi.enabled = False
+        self.weightDPhi.value = 1
+        self.weightline3.addWidget(self.weightDPhi)
+
+        self.labelDTheta = qt.QLabel("DTheta")
+        self.weightline3.addWidget(self.labelDTheta)
+        self.weightDTheta = ctk.ctkDoubleSpinBox()
+        self.weightDTheta.enabled = False
+        self.weightDTheta.value = 1
+        self.weightline3.addWidget(self.weightDTheta)
 
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
 
@@ -226,13 +243,19 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             self.weightKappa1.enabled = not self.weightKappa1.enabled
 
         if self.specifyPropertySelector.currentIndex == 3:
-            self.weightT.enabled = not self.weightT.enabled
+            self.weightS.enabled = not self.weightS.enabled
 
         if self.specifyPropertySelector.currentIndex == 4:
             self.weightK.enabled = not self.weightK.enabled
 
         if self.specifyPropertySelector.currentIndex == 5:
             self.weightKappa2.enabled = not self.weightKappa2.enabled
+
+        if self.specifyPropertySelector.currentIndex == 6:
+            self.weightDPhi.enabled = not self.weightDPhi.enabled
+
+        if self.specifyPropertySelector.currentIndex == 7:
+            self.weightDTheta.enabled = not self.weightDTheta.enabled
 
 
     ## Function onCheckBoxParam(self):
@@ -279,13 +302,13 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
                 self.propertyValue = self.propertyValue + str(self.weightKappa1.value)
                 self.property = self.property + "Kappa1.txt"
 
-            if self.weightT.enabled:
+            if self.weightS.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightT.value)
-                self.property = self.property + "T.txt"
+                self.propertyValue = self.propertyValue + str(self.weightS.value)
+                self.property = self.property + "S.txt"
 
             if self.weightK.enabled:
                 if self.propertyValue != "":
@@ -302,6 +325,22 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
                 self.propertyValue = self.propertyValue + str(self.weightKappa2.value)
                 self.property = self.property + "Kappa2.txt"
+
+            if self.weightDPhi.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
+
+                self.propertyValue = self.propertyValue + str(self.weightDPhi.value)
+                self.property = self.property + "DPhi.txt"
+
+            if self.weightDTheta.enabled:
+                if self.propertyValue != "":
+                    self.propertyValue = self.propertyValue + ","
+                    self.property = self.property + ","
+
+                self.propertyValue = self.propertyValue + str(self.weightDTheta.value)
+                self.property = self.property + "DTheta.txt"
 
             if self.property == "":
                 self.property = 0
