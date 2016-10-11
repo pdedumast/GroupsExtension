@@ -4,6 +4,7 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 
+import subprocess
 
 #
 # Groups
@@ -57,15 +58,15 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.ioQVBox.addWidget(self.directoryGroupBox)
         self.ioQFormLayout = qt.QFormLayout(self.directoryGroupBox)
 
-        # Selection of the directory containing the input models (option: -i, then --surfaceDir)
+        # Selection of the directory containing the input models (option: --surfaceDir)
         self.inputModelsDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputModelsDirectorySelector)
 
-        # Selection of the input directory containing the property files from SPHARM (txt files) (option: -p, then --propertyDir)
+        # Selection of the input directory containing the property files from SPHARM (txt files) (option: --propertyDir)
         self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
 
-        # Selection of the output directory for Groups (option: -o, then --outputDir)
+        # Selection of the output directory for Groups (option: --outputDir)
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
@@ -213,6 +214,20 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # ----- Add vertical spacer ----- #
         self.layout.addStretch(1)
 
+
+        #### SET PARAMETERS - test
+        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
+        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
+        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
+        #
+        # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
+        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
+        #
+        # self.maxIter.value = 50000
+
+
+
+
     ## Function cleanup(self):
     def cleanup(self):
         pass
@@ -273,6 +288,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Check if parameters group box enabled
     def onApplyButtonClicked(self):
         logic = GroupsLogic()
+
+        # Update names
+        self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
+        self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
+        self.outputDirectory = str(self.outputDirectorySelector.directory)
+
 
         if not self.enableParamCB.checkState():
             logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
@@ -347,18 +368,15 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             if self.propertyValue == "":
                 self.propertyValue = 0
 
-            print self.propertyValue
-            print self.property
-
             if self.landmarkDirectorySelector.directory == ".":
                 landmark = 0
             else:
-                landmark = self.landmarkDirectorySelector.directory
+                landmark = str(self.landmarkDirectorySelector.directory)
 
             if self.sphericalModelsDirectorySelector.directory == ".":
                 sphereDir = 0
             else:
-                sphereDir = self.sphericalModelsDirectorySelector.directory
+                sphereDir = str(self.sphericalModelsDirectorySelector.directory)
 
 
             logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory, self.property, self.propertyValue, landmark, self.degreeSpharm.value, sphereDir, self.maxIter.value)
@@ -474,45 +492,51 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         groups = "/Users/prisgdd/Documents/Projects/Groups/GROUPS-build/Groups-build/bin/Groups"
 
         arguments = list()
-        arguments.append("-i")
+        arguments.append("--surfaceDir")
         arguments.append(modelsDir)
-        arguments.append("-p")
+        arguments.append("--propertyDir")
         arguments.append(propertyDir)
-        arguments.append("-o")
+        arguments.append("--outputDir")
         arguments.append(outputDir)
 
         if properties:
-            arguments.append("-x")
+            arguments.append("--filter")
             arguments.append(properties)
         if propValues:
             arguments.append("-w")
             arguments.append(propValues)
 
         if landmark:
-            arguments.append("-landmarkDir")
+            arguments.append("--landmarkDir")
             arguments.append(landmark)
         if degree:
             arguments.append("-d")
-            arguments.append(degree)
+            arguments.append(int(degree))
         if sphereDir:
-            arguments.append("-sphereDir")
+            arguments.append("--sphereDir")
             arguments.append(sphereDir)
         if maxIter:
-            arguments.append("-maxIter")
+            arguments.append("--maxIter")
             arguments.append(maxIter)
 
         print arguments
 
-        # # ----- Call to the CLI -----
-        # process = qt.QProcess()
-        # print "Calling " + os.path.basename(groups)
-        # process.start(groups, arguments)
-        # process.waitForStarted()
-        # print "state: " + str(process.state())
-        # process.waitForFinished()
-        # print "error: " + str(process.error())
+        # ----- Call the CLI -----
+        self.process = qt.QProcess()
+        # self.process.setProcessChannelMode(qt.QProcess.MergedChannels)
+
+        print "Calling " + os.path.basename(groups)
+        self.process.start(groups, arguments)
+        self.process.waitForStarted()
+        # print "state: " + str(self.process.state())
+        self.process.waitForFinished(-1)
+        # print "error: " + str(self.process.error())
+
+        # processOutput = self.process.readAll()
+        # print "processOutput : " + str(processOutput)
 
         return True
+
 
 
 class GroupsTest(ScriptedLoadableModuleTest):
