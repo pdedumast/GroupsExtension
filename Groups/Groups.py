@@ -497,8 +497,11 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         arguments.append(modelsDir)
         arguments.append("--propertyDir")
         arguments.append(propertyDir)
+        arguments.append("--sphereDir")
+        arguments.append(sphereDir)
         arguments.append("--outputDir")
         arguments.append(outputDir)
+
 
         if properties:
             arguments.append("--filter")
@@ -525,10 +528,6 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         else:
             arguments.append("-d")
             arguments.append(5)
-
-        if sphereDir:
-            arguments.append("--sphereDir")
-            arguments.append(sphereDir)
 
         if maxIter:
             arguments.append("--maxIter")
