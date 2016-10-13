@@ -66,6 +66,10 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
 
+        # Selection of the directory which contains each spherical model (option: --sphereDir)
+        self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
+        self.ioQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
+
         # Selection of the output directory for Groups (option: --outputDir)
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
@@ -78,7 +82,9 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Connections
         self.inputModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.inputPropertyDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
+        self.sphericalModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.outputDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
+
         self.enableParamCB.connect("stateChanged(int)", self.onCheckBoxParam)
 
         # Name simplification (string)
@@ -183,14 +189,11 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.degreeSpharm.setDecimals(0)
         self.paramQFormLayout.addRow(qt.QLabel("Degree of SPHARM decomposition:"), self.degreeSpharm)
 
-        # Selection of the directory which contains each spherical model (option: -alignedSphere, then --sphereDir)
-        self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
-        self.paramQFormLayout.addRow("Spherical Models Directory:", self.sphericalModelsDirectorySelector)
-
         # Maximum iteration (option: ??, then --maxIter)
         self.maxIter = qt.QSpinBox()
         self.maxIter.minimum = 0            # Check the range authorized
         self.maxIter.maximum = 100000
+        self.maxIter.value = 10000
         self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
 
         # Name simplification
@@ -216,17 +219,14 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
         #### SET PARAMETERS - test
-        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
-        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
-        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
-        #
+        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
+        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
+        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
+
         # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
-        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
-        #
-        # self.maxIter.value = 50000
+        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
 
-
-
+        self.maxIter.value = 5
 
     ## Function cleanup(self):
     def cleanup(self):
@@ -240,10 +240,11 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Update names
         self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
         self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
+        self.sphereDirectory = str(self.sphericalModelsDirectorySelector.directory)
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
         # Check if each directory has been choosen
-        self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "."
+        self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "." and self.sphereDirectory != "."
 
     ## Function onSelect(self):
     # Enable associated weights
@@ -292,14 +293,16 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Update names
         self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
         self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
+        self.sphereDirectory = str(self.sphericalModelsDirectorySelector.directory)
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
 
         if not self.enableParamCB.checkState():
-            logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory)
+            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory, sphereDir = self.sphereDirectory, outputDir = self.outputDirectory)
 
         else:
             # ----- Creation of string for the specified properties and their values -----
+
             self.property = ""
             self.propertyValue = ""
 
@@ -363,9 +366,8 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
                 self.propertyValue = self.propertyValue + str(self.weightDTheta.value)
                 self.property = self.property + "DTheta.txt"
 
-            if self.property == "":
+            if self.property == "" and self.propertyValue == "":                         # Si aucune propriete selectionnee
                 self.property = 0
-            if self.propertyValue == "":
                 self.propertyValue = 0
 
             if self.landmarkDirectorySelector.directory == ".":
@@ -373,13 +375,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             else:
                 landmark = str(self.landmarkDirectorySelector.directory)
 
-            if self.sphericalModelsDirectorySelector.directory == ".":
-                sphereDir = 0
-            else:
-                sphereDir = str(self.sphericalModelsDirectorySelector.directory)
+            d = self.degreeSpharm.value
+            m = self.maxIter.value
 
+# self, modelsDir, propertyDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, sphereDir=0, maxIter=0
 
-            logic.runGroups(self.modelsDirectory, self.propertyDirectory, self.outputDirectory, self.property, self.propertyValue, landmark, self.degreeSpharm.value, sphereDir, self.maxIter.value)
+            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory, sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property, propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
 
 
 #
@@ -463,18 +464,18 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
 
 
-    ## Functiun runGroups(...)
+    ## Function runGroups(...)
     #
     #
-    def runGroups(self, modelsDir, propertyDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, sphereDir=0, maxIter=0):
+    def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, maxIter=0):
         print "--- function runGroups() ---"
 
         """
         Calling Groups CLI
             Arguments:
-             -i: Directory with input models
-             -p: Property folder (txt files from SPHARM)
-             -o: Output directory
+             --surfaceDir: Directory with input models
+             --propertyDir: Property folder (txt files from SPHARM)
+             --outputDir: Output directory
         """
 
         # ----- Creation of the command line -----
@@ -502,22 +503,40 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         if properties:
             arguments.append("--filter")
             arguments.append(properties)
+        else:       # Si proprietes non precisees
+            arguments.append("--filter")
+            arguments.append("C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt")
+
         if propValues:
             arguments.append("-w")
             arguments.append(propValues)
+        else:
+            arguments.append("-w")
+            arguments.append("1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0")
+
 
         if landmark:
             arguments.append("--landmarkDir")
             arguments.append(landmark)
+
         if degree:
             arguments.append("-d")
             arguments.append(int(degree))
+        else:
+            arguments.append("-d")
+            arguments.append(5)
+
         if sphereDir:
             arguments.append("--sphereDir")
             arguments.append(sphereDir)
+
         if maxIter:
             arguments.append("--maxIter")
             arguments.append(maxIter)
+        else:
+            arguments.append("--maxIter")
+            # arguments.append(10000)
+            arguments.append(10)
 
         print arguments
 
