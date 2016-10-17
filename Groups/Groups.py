@@ -219,14 +219,14 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
         #### SET PARAMETERS - test
-        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
-        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
-        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
+        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
+        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
+        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
+        #
+        # # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
+        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
 
-        # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
-        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
-
-        self.maxIter.value = 5
+        # self.maxIter.value = 5
 
     ## Function cleanup(self):
     def cleanup(self):
@@ -475,7 +475,13 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
             Arguments:
              --surfaceDir: Directory with input models
              --propertyDir: Property folder (txt files from SPHARM)
+             --sphereDir: Sphere folder
              --outputDir: Output directory
+             --filter: Properties to consider
+             -w: weights associated with each property
+             --landmarkDir: Landmark folder
+             -d: Degree of deformation field
+             --maxIter: Maximum number of iteration
         """
 
         # ----- Creation of the command line -----
@@ -502,21 +508,23 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         arguments.append("--outputDir")
         arguments.append(outputDir)
 
-
-        if properties:
+        if properties and propValues:
+            # If # of properties and # of weights aren't the same, we cut the end
+            if properties.count(',') > propValues.count(','):
+                while properties.count(',') > propValues.count(','):
+                    properties = (','.join(properties.split(',')[:-1]))
+            elif propValues.count(',') > properties.count(','):
+                while propValues.count(',') > properties.count(','):
+                    propValues = (','.join(propValues.split(',')[:-1]))
             arguments.append("--filter")
             arguments.append(properties)
-        else:       # Si proprietes non precisees
-            arguments.append("--filter")
-            arguments.append("C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt")
-
-        if propValues:
             arguments.append("-w")
             arguments.append(propValues)
-        else:
+        else:       # If no properties specified - Default: each property with weight=1
+            arguments.append("--filter")
+            arguments.append("C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt")
             arguments.append("-w")
             arguments.append("1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0")
-
 
         if landmark:
             arguments.append("--landmarkDir")
@@ -525,28 +533,25 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         if degree:
             arguments.append("-d")
             arguments.append(int(degree))
-        else:
+        else:           # Default: degree=5
             arguments.append("-d")
             arguments.append(5)
 
         if maxIter:
             arguments.append("--maxIter")
             arguments.append(maxIter)
-        else:
+        else:           # Default: # maximum of iteration = 5000
             arguments.append("--maxIter")
-            # arguments.append(10000)
-            arguments.append(10)
-
-        print arguments
+            arguments.append(5000)
 
         # ----- Call the CLI -----
         self.process = qt.QProcess()
         # self.process.setProcessChannelMode(qt.QProcess.MergedChannels)
 
-        print "Calling " + os.path.basename(groups)
+        # print "Calling " + os.path.basename(groups)
         self.process.start(groups, arguments)
         self.process.waitForStarted()
-        # print "state: " + str(self.process.state())
+        # # print "state: " + str(self.process.state())
         self.process.waitForFinished(-1)
         # print "error: " + str(self.process.error())
 
@@ -556,57 +561,258 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         return True
 
 
-
 class GroupsTest(ScriptedLoadableModuleTest):
     """
-  This is the test case for your scripted module.
-  Uses ScriptedLoadableModuleTest base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
+        This is the test case for your scripted module.
+        Uses ScriptedLoadableModuleTest base class, available at:
+        https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+        """
 
     def setUp(self):
         """ Do whatever is needed to reset the state - typically a scene clear will be enough.
-    """
+            """
         slicer.mrmlScene.Clear(0)
 
     def runTest(self):
         """Run as few or as many tests as needed here.
-    """
+            """
+        self.delayDisplay("Starting the test")
         self.setUp()
-        self.test_Groups1()
+
+        self.delayDisplay("Test 1")
+        self.assertTrue(self.test_Groups1())
+        self.delayDisplay("Test 2 - All properties")
+        self.assertTrue(self.test_Groups2())
+        self.delayDisplay("Test 3 - Without landmark")
+        self.assertTrue(self.test_Groups3())
+        self.delayDisplay("Test 4 - No properties or weights specified")
+        self.assertTrue(self.test_Groups4())
+        self.delayDisplay("Test 5 - # of properties different from # of weights")
+        self.assertTrue(self.test_Groups5())
+        self.delayDisplay("Test 6 - No specified values for degree and # of iteration")
+        self.assertTrue(self.test_Groups6())
+
+        self.delayDisplay('All test passed!')
+
 
     def test_Groups1(self):
-        """ Ideally you should have several levels of tests.  At the lowest level
-    tests should exercise the functionality of the logic with different inputs
-    (both valid and invalid).  At higher levels your tests should emulate the
-    way the user would interact with your code and confirm that it still works
-    the way you intended.
-    One of the most important features of the tests is that it should alert other
-    developers when their changes will have an impact on the behavior of your
-    module.  For example, if a developer removes a feature that you depend on,
-    your test should break so they know that the feature is needed.
-    """
+        self.delayDisplay('Start test 1')
 
-        self.delayDisplay("Starting the test")
-        #
-        # first, get some data
-        #
-        import urllib
-        downloads = (
-            ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        degree = 5
+        maxIter = 1000
+        properties = "C.txt,S.txt"
+        propertiesValues = "0.5,0.25"
+        outputDir1 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest1"
+        outputVerif1 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif1"
 
-        for url, name, loader in downloads:
-            filePath = slicer.app.temporaryPath + '/' + name
-            if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-                logging.info('Requesting download %s from %s...\n' % (name, url))
-                urllib.urlretrieve(url, filePath)
-            if loader:
-                logging.info('Loading %s...' % (name,))
-                loader(filePath)
-        self.delayDisplay('Finished with download and loading')
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir,
+        #                 sphereDir=sphereDir, outputDir=outputDir1, properties=properties,
+        #                 propValues=propertiesValues, landmark=landmarkDir, degree=degree, maxIter=maxIter)
 
-        volumeNode = slicer.util.getNode(pattern="FA")
-        logic = GroupsLogic()
-        self.assertIsNotNone(logic.hasImageData(volumeNode))
-        self.delayDisplay('Test passed!')
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir1, outputVerif1, meshDir):
+            self.delayDisplay('Test 1 passed!')
+            return True
+        else:
+            return False
+
+
+    def test_Groups2(self):
+        self.delayDisplay('Start test 2')
+
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        degree = 5
+        maxIter = 5000
+        properties = "C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt"
+        propertiesValues = "0.2,1.0,0.3,0.25,0.3,0.8,0.1,0.4"
+        outputDir2 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest2"
+        outputVerif2 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif2"
+
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir,
+        #                 sphereDir=sphereDir, outputDir=outputDir2, properties=properties,
+        #                 propValues=propertiesValues, landmark=landmarkDir, degree=degree, maxIter=maxIter)
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir2, outputVerif2, meshDir):
+            self.delayDisplay('Test 2 passed!')
+            return True
+        else:
+            return False
+
+
+    def test_Groups3(self):
+        self.delayDisplay('Start test 3')
+
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        degree = 5
+        maxIter = 1000
+        properties = "C.txt,S.txt"
+        propertiesValues = "0.5,0.25"
+        outputDir3 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest3"
+
+        outputVerif3 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif3"
+
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir,
+        #                 sphereDir=sphereDir, outputDir=outputDir3, properties=properties,
+        #                 propValues=propertiesValues, degree=degree, maxIter=maxIter)
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir3, outputVerif3, meshDir):
+            self.delayDisplay('Test 3 passed!')
+            return True
+        else:
+            return False
+
+    def test_Groups4(self):
+        self.delayDisplay('Start test 4')
+
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        degree = 18
+        maxIter = 1000
+
+        outputDir4 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest4"
+
+        outputVerif4 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif4"
+
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir,
+        #                 sphereDir=sphereDir, outputDir=outputDir4, landmark=landmarkDir, degree=degree, maxIter=maxIter)
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir4, outputVerif4, meshDir):
+            self.delayDisplay('Test 4 passed!')
+            return True
+        else:
+            return False
+
+
+    def test_Groups5(self):
+        self.delayDisplay('Start test 5')
+
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+        degree = 5
+        maxIter = 1000
+        properties = "DPhi.txt,C.txt,S.txt,Kappa1.txt"
+        propertiesValues = "0.1,0.3"
+
+        outputDir5 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest5"
+
+        outputVerif5 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif5"
+
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir, properties=properties,
+        #                 propValues=propertiesValues,
+        #                 sphereDir=sphereDir, outputDir=outputDir5, landmark=landmarkDir, degree=degree, maxIter=maxIter)
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir5, outputVerif5, meshDir):
+            self.delayDisplay('Test 5 passed!')
+            return True
+        else:
+            return False
+
+
+    def test_Groups6(self):
+        self.delayDisplay('Start test 6')
+
+        ## --- Prepare parameters --- ##
+        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
+        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
+        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+
+        properties = "C.txt,S.txt"
+        propertiesValues = "0.5,0.25"
+
+        outputDir6 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest6"
+
+        outputVerif6 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif6"
+
+        ## --- Call the CLI --- ##
+        # logic = GroupsLogic()
+        # logic.runGroups(modelsDir=meshDir, propertyDir=propertiesDir,
+        #                 sphereDir=sphereDir, outputDir=outputDir6, properties=properties,
+        #                 propValues=propertiesValues, landmark=landmarkDir)
+
+        ## --- Compare results --- ##
+        if self.outputcomparison(outputDir6, outputVerif6, meshDir):
+            self.delayDisplay('Test 6 passed!')
+            return True
+        else:
+            return False
+
+    ## Function outputComparison(...)
+    # Compare the expected outputs with those obtained
+    def outputcomparison(self, outputDir, outputVerif, inputDir):
+        listFilesOut = os.listdir(outputDir)
+        listFilesVerif = os.listdir(outputVerif)
+
+        ## Delete .DS_Store if there is one - for MacOS
+        if listFilesOut.count(".DS_Store"):
+            listFilesOut.remove(".DS_Store")
+        if listFilesVerif.count(".DS_Store"):
+            listFilesVerif.remove(".DS_Store")
+
+
+        ## Check number of outputs
+        nbFilesOut = len(listFilesOut)
+        nbFilesIn = len(os.listdir(inputDir))
+
+        if nbFilesOut != nbFilesIn:
+            print "Wrong number of outputs"
+            return False
+
+        ## Check files names
+        listFilesOutNames = list()
+        listFilesVerifNames = list()
+        for i in range(0, len(listFilesOut)):
+            listFilesOutNames.append('.'.join(listFilesOut[i].split('.')[:-1]))
+            listFilesVerifNames.append('.'.join(listFilesVerif[i].split('.')[:-1]))
+
+            if listFilesOutNames[i] != listFilesVerifNames[i]:
+                print "Erreur de noms"
+                return False
+
+        ## Compare files contents
+        taille = len(listFilesOut)
+        for i in range(0, taille):
+            fTest = open(outputDir + "/" + listFilesOut[i], "r")
+            contenuTest = fTest.read()
+
+            fVerif = open(outputVerif + "/" + listFilesVerif[i], "r")
+            contenuVerif = fVerif.read()
+
+            if contenuTest != contenuVerif:
+                print "Wrong contents"
+                return False
+
+        return True
