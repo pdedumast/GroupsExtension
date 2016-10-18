@@ -43,9 +43,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     def setup(self):
         ScriptedLoadableModuleWidget.setup(self)
 
-        """
-        Collapsible part for input/output parameters for Groups CLI
-        """
+        ###################################################################
+        ##                                                               ##
+        ##  Collapsible part for input/output parameters for Groups CLI  ##
+        ##                                                               ##
+        ###################################################################
+
         self.ioCollapsibleButton = ctk.ctkCollapsibleButton()
         self.ioCollapsibleButton.text = "IO"
         self.layout.addWidget(self.ioCollapsibleButton)
@@ -74,7 +77,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
         self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
 
-        # CheckBox. If checked, Group Box parameters will be enabled
+        # CheckBox. If checked, Group Box 'Parameters' will be enabled
         self.enableParamCB = ctk.ctkCheckBox()
         self.enableParamCB.setText("Personalize parameters")
         self.ioQFormLayout.addRow(self.enableParamCB)
@@ -84,7 +87,6 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.inputPropertyDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.sphericalModelsDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
         self.outputDirectorySelector.connect("directoryChanged(const QString &)", self.onSelect)
-
         self.enableParamCB.connect("stateChanged(int)", self.onCheckBoxParam)
 
         # Name simplification (string)
@@ -98,17 +100,15 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.parametersGroupBox = qt.QGroupBox("Parameters")
         self.ioQVBox.addWidget(self.parametersGroupBox)
         self.paramQFormLayout = qt.QFormLayout(self.parametersGroupBox)
-
         self.parametersGroupBox.setEnabled(False)
 
-        # Selection of the property we want to use (option: -x, then --filter)
+        # Selection of the property we want to use (option: --filter)
         self.specifyPropertySelector = ctk.ctkCheckableComboBox()
         self.specifyPropertySelector.addItems(("C","H","Kappa1","S","K","Kappa2","DPhi","DTheta"))
         self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
 
-        # Weights of each property - Choices on 2 lines (option: ??, then -w)
+        # Weights of each property - Choices on 3 lines (option: -w)
         self.weightLayout = qt.QVBoxLayout(self.parametersGroupBox)
-
         self.weightline1 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 1
         self.weightLayout.addLayout(self.weightline1)
         self.weightline2 = qt.QHBoxLayout(self.parametersGroupBox)  # Line 2
@@ -177,7 +177,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
 
-        # Selection of the directory which contains each spherical model (option: -??, then --landmarkDir)
+        # Selection of the directory which contains each spherical model (option: --landmarkDir)            ## !!!!!!!!!!!
         self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
         self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
 
@@ -189,11 +189,11 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.degreeSpharm.setDecimals(0)
         self.paramQFormLayout.addRow(qt.QLabel("Degree of SPHARM decomposition:"), self.degreeSpharm)
 
-        # Maximum iteration (option: ??, then --maxIter)
+        # Maximum iteration (option: --maxIter)
         self.maxIter = qt.QSpinBox()
         self.maxIter.minimum = 0            # Check the range authorized
         self.maxIter.maximum = 100000
-        self.maxIter.value = 10000
+        self.maxIter.value = 5000
         self.paramQFormLayout.addRow("Maximum number of iteration:", self.maxIter)
 
         # Name simplification
@@ -202,7 +202,6 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Connections
         self.specifyPropertySelector.connect("checkedIndexesChanged()", self.onSpecifyPropertyChanged)
-
 
         # ------------------------------------------ #
         # ----- Apply button to launch the CLI ----- #
@@ -218,22 +217,22 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.layout.addStretch(1)
 
 
-        #### SET PARAMETERS - test
-        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
-        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
-        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
-        #
-        # # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
-        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
+        #### SET PARAMETERS - for test!!
+        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
+        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
+        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
 
-        # self.maxIter.value = 5
+        # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
+        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
+        self.degreeSpharm.value = 10
+        self.maxIter.value = 5
 
     ## Function cleanup(self):
     def cleanup(self):
         pass
 
     ## Function onSelect(self):
-    # Check if each directory (Models, Property, Output) have been choosen.
+    # Check if each directory (Models, Property, Sphere and Output) have been chosen.
     # If they were, Apply button is enabled to call the CLI
     # Update the simplified names
     def onSelect(self):
@@ -246,8 +245,8 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         # Check if each directory has been choosen
         self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "." and self.sphereDirectory != "."
 
-    ## Function onSelect(self):
-    # Enable associated weights
+    ## Function onSpecifyPropertyChanged(self):
+    # Enable/Disable associated weights
     def onSpecifyPropertyChanged(self):
         if self.specifyPropertySelector.currentIndex == 0:
             self.weightC.enabled = not self.weightC.enabled
@@ -273,9 +272,8 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         if self.specifyPropertySelector.currentIndex == 7:
             self.weightDTheta.enabled = not self.weightDTheta.enabled
 
-
     ## Function onCheckBoxParam(self):
-    # Enable the parameter Group Box if check boc checked
+    # Enable the parameter Group Box if associated check box is checked
     def onCheckBoxParam(self):
         if self.enableParamCB.checkState():
             self.parametersGroupBox.setEnabled(True)
@@ -283,10 +281,9 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             self.parametersGroupBox.setEnabled(False)
 
     ## Function onApplyButtonClicked(self):
-        # Update every parameters
-        # Check directories are ok
-        # Check maxIter is an integer
-        # Check if parameters group box enabled
+    # Update every parameters to call Groups
+    # Check maxIter is an integer
+    # Check if parameters group box enabled
     def onApplyButtonClicked(self):
         logic = GroupsLogic()
 
@@ -296,13 +293,11 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.sphereDirectory = str(self.sphericalModelsDirectorySelector.directory)
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
-
         if not self.enableParamCB.checkState():
-            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory, sphereDir = self.sphereDirectory, outputDir = self.outputDirectory)
+            logic.runGroups(modelsDir=self.modelsDirectory, propertyDir=self.propertyDirectory, sphereDir=self.sphereDirectory, outputDir=self.outputDirectory)
 
         else:
-            # ----- Creation of string for the specified properties and their values -----
-
+            # ----- Creation of string for the specified properties and their values ----- #
             self.property = ""
             self.propertyValue = ""
 
@@ -375,13 +370,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             else:
                 landmark = str(self.landmarkDirectorySelector.directory)
 
-            d = self.degreeSpharm.value
-            m = self.maxIter.value
+            d = int(self.degreeSpharm.value)
+            m = int(self.maxIter.value)
 
-# self, modelsDir, propertyDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, sphereDir=0, maxIter=0
-
-            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory, sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property, propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
-
+            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory,
+                            sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property,
+                            propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
 
 #
 # GroupsLogic
@@ -397,76 +391,10 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
   """
 
-    def hasImageData(self, volumeNode):
-        """This is an example logic method that
-    returns true if the passed in volume
-    node has valid image data
-    """
-        if not volumeNode:
-            logging.debug('hasImageData failed: no volume node')
-            return False
-        if volumeNode.GetImageData() is None:
-            logging.debug('hasImageData failed: no image data in volume node')
-            return False
-        return True
-
-    def isValidInputOutputData(self, inputVolumeNode, outputVolumeNode):
-        """Validates if the output is not the same as input
-    """
-        if not inputVolumeNode:
-            logging.debug('isValidInputOutputData failed: no input volume node defined')
-            return False
-        if not outputVolumeNode:
-            logging.debug('isValidInputOutputData failed: no output volume node defined')
-            return False
-        if inputVolumeNode.GetID() == outputVolumeNode.GetID():
-            logging.debug(
-                'isValidInputOutputData failed: input and output volume is the same. Create a new volume for output to avoid this error.')
-            return False
-        return True
-
-    def takeScreenshot(self, name, description, type=-1):
-        # show the message even if not taking a screen shot
-        slicer.util.delayDisplay(
-            'Take screenshot: ' + description + '.\nResult is available in the Annotations module.', 3000)
-
-        lm = slicer.app.layoutManager()
-        # switch on the type to get the requested window
-        widget = 0
-        if type == slicer.qMRMLScreenShotDialog.FullLayout:
-            # full layout
-            widget = lm.viewport()
-        elif type == slicer.qMRMLScreenShotDialog.ThreeD:
-            # just the 3D window
-            widget = lm.threeDWidget(0).threeDView()
-        elif type == slicer.qMRMLScreenShotDialog.Red:
-            # red slice window
-            widget = lm.sliceWidget("Red")
-        elif type == slicer.qMRMLScreenShotDialog.Yellow:
-            # yellow slice window
-            widget = lm.sliceWidget("Yellow")
-        elif type == slicer.qMRMLScreenShotDialog.Green:
-            # green slice window
-            widget = lm.sliceWidget("Green")
-        else:
-            # default to using the full window
-            widget = slicer.util.mainWindow()
-            # reset the type so that the node is set correctly
-            type = slicer.qMRMLScreenShotDialog.FullLayout
-
-        # grab and convert to vtk image data
-        qpixMap = qt.QPixmap().grabWidget(widget)
-        qimage = qpixMap.toImage()
-        imageData = vtk.vtkImageData()
-        slicer.qMRMLUtils().qImageToVtkImageData(qimage, imageData)
-
-        annotationLogic = slicer.modules.annotations.logic()
-        annotationLogic.CreateSnapShot(name, description, type, 1, imageData)
-
-
     ## Function runGroups(...)
-    #
-    #
+    #   Check if directories are ok
+    #   Create the command line
+    #   Call the CLI Groups
     def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, maxIter=0):
         print "--- function runGroups() ---"
 
@@ -484,7 +412,65 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
              --maxIter: Maximum number of iteration
         """
 
-        # ----- Creation of the command line -----
+        #####################################################################################
+        ## ----- Check if directories contents correctly match with models Directory ----- ##
+        # For each shape, files should have the same name, with different extension.
+        #       Mesh: [name].vtk
+        #       Properties: 8 x [name].vtk.[prop].txt
+        #       Sphere: [name].txt.vtk
+        #       landmark: [name].txt
+
+
+        ## Preparation of the reference list (from modelsDir)
+        listModelsDir = os.listdir(modelsDir)
+        listModelsName = list()
+        if listModelsDir.count(".DS_Store"):
+            listModelsDir.remove(".DS_Store")
+        if not len(listModelsDir):
+            return False
+        # Get the list of all basename + check if they are all vtk files
+        for i in range(0, len(listModelsDir)):
+            extension = listModelsDir[i].split('.')[-1]
+            if extension == 'vtk':
+                listModelsName.append('.'.join(listModelsDir[i].split('.')[:-1]))
+
+        ## Check other directories
+        listPropertyDir = os.listdir(propertyDir)
+        listPropertyName = list()
+        if listPropertyDir.count(".DS_Store"):
+            listPropertyDir.remove(".DS_Store")
+        # There should be 8 files for each one in modelsDir
+        listPropertyName = ['.'.join(file.split('.')[:-3]) for file in listPropertyDir]
+        for file in listModelsName:
+            if listPropertyName.count(file) != 8:
+                print "Properties. Not enough properties for " + str(file)
+                return False
+
+        listSphereDir = os.listdir(sphereDir)
+        listSphereName = list()
+        if listSphereDir.count(".DS_Store"):
+            listSphereDir.remove(".DS_Store")
+        # There should be the same basename files
+        listSphereName = ['.'.join(file.split('.')[:-2]) for file in listSphereDir]
+        for file in listModelsName:
+            if listSphereName.count(file) != 1:
+                print "Sphere. Wrong correspondence between name files " + str(file)
+                return False
+
+        if landmark:
+            listLandmarkDir = os.listdir(landmark)
+            if listLandmarkDir.count(".DS_Store"):
+                listLandmarkDir.remove(".DS_Store")
+            listLandmarkName = list()
+            ## In each directory there should be files with same basename as in the model repertory
+            listNameName = ['.'.join(file.split('.')[:-1]) for file in listLandmarkDir]
+            for file in listModelsName:
+                if listNameName.count(file) != 1:
+                    print "Landmark. Wrong correspondence between name files " + str(file)
+                    return False
+
+        ############################################
+        # ----- Creation of the command line ----- #
 
         # # Avec le make package
         # self.moduleName = "Groups"
@@ -509,7 +495,7 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         arguments.append(outputDir)
 
         if properties and propValues:
-            # If # of properties and # of weights aren't the same, we cut the end
+            # If # of properties and # of weights aren't the same, we cut those at the end
             if properties.count(',') > propValues.count(','):
                 while properties.count(',') > propValues.count(','):
                     properties = (','.join(properties.split(',')[:-1]))
@@ -544,7 +530,8 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
             arguments.append("--maxIter")
             arguments.append(5000)
 
-        # ----- Call the CLI -----
+        ############################
+        # ----- Call the CLI ----- #
         self.process = qt.QProcess()
         # self.process.setProcessChannelMode(qt.QProcess.MergedChannels)
 
@@ -616,7 +603,6 @@ class GroupsTest(ScriptedLoadableModuleTest):
         #                 sphereDir=sphereDir, outputDir=outputDir1, properties=properties,
         #                 propValues=propertiesValues, landmark=landmarkDir, degree=degree, maxIter=maxIter)
 
-
         ## --- Compare results --- ##
         if self.outputcomparison(outputDir1, outputVerif1, meshDir):
             self.delayDisplay('Test 1 passed!')
@@ -624,7 +610,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
         else:
             return False
 
-
+    # Test 2 - All properties
     def test_Groups2(self):
         self.delayDisplay('Start test 2')
 
@@ -653,7 +639,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
         else:
             return False
 
-
+    # Test 3 - Without landmark
     def test_Groups3(self):
         self.delayDisplay('Start test 3')
 
@@ -682,6 +668,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
         else:
             return False
 
+    # Test 4 - No properties or weights specified"
     def test_Groups4(self):
         self.delayDisplay('Start test 4')
 
@@ -709,7 +696,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
         else:
             return False
 
-
+    # Test 5 - # of properties different from # of weights
     def test_Groups5(self):
         self.delayDisplay('Start test 5')
 
@@ -740,7 +727,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
         else:
             return False
 
-
+    # Test 6 - No specified values for degree and # of iteration
     def test_Groups6(self):
         self.delayDisplay('Start test 6')
 
@@ -771,7 +758,7 @@ class GroupsTest(ScriptedLoadableModuleTest):
             return False
 
     ## Function outputComparison(...)
-    # Compare the expected outputs with those obtained
+    # Compare the expected outputs (outputVerif) with those obtained (outputDir)
     def outputcomparison(self, outputDir, outputVerif, inputDir):
         listFilesOut = os.listdir(outputDir)
         listFilesVerif = os.listdir(outputVerif)
@@ -782,11 +769,9 @@ class GroupsTest(ScriptedLoadableModuleTest):
         if listFilesVerif.count(".DS_Store"):
             listFilesVerif.remove(".DS_Store")
 
-
         ## Check number of outputs
         nbFilesOut = len(listFilesOut)
         nbFilesIn = len(os.listdir(inputDir))
-
         if nbFilesOut != nbFilesIn:
             print "Wrong number of outputs"
             return False
