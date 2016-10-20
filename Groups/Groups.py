@@ -4,7 +4,8 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
 
-import subprocess
+import shutil
+
 
 #
 # Groups
@@ -560,6 +561,19 @@ class GroupsTest(ScriptedLoadableModuleTest):
             """
         slicer.mrmlScene.Clear(0)
 
+        ## Prepare data & paths
+        self.initialPath = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/"
+        self.localPath = slicer.app.temporaryPath + "/dataTest"
+
+
+        if os.path.isdir(self.localPath):
+            shutil.rmtree(self.localPath)
+
+        shutil.copytree(self.initialPath, self.localPath)
+
+        if os.path.isdir(self.localPath):
+            print os.listdir(self.localPath)
+
     def runTest(self):
         """Run as few or as many tests as needed here.
             """
@@ -586,16 +600,19 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 1')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        landmarkDir = self.localPath + "/landmark"
+        sphereDir = self.localPath + "/sphere"
         degree = 5
         maxIter = 1000
         properties = "C.txt,S.txt"
         propertiesValues = "0.5,0.25"
-        outputDir1 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest1"
-        outputVerif1 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif1"
+        outputVerif1 = self.localPath + "/outputVerif/outputVerif1"
+        outputDir1 = self.localPath + "/outputTest/outputTest1"
+
+        if not os.path.exists(outputDir1):
+            os.mkdir(outputDir1)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
@@ -615,16 +632,19 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 2')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        landmarkDir = self.localPath + "/landmark"
+        sphereDir = self.localPath + "/sphere"
         degree = 5
         maxIter = 5000
         properties = "C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt"
         propertiesValues = "0.2,1.0,0.3,0.25,0.3,0.8,0.1,0.4"
-        outputDir2 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest2"
-        outputVerif2 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif2"
+        outputDir2 = self.localPath + "/outputTest/outputTest2"
+        outputVerif2 = self.localPath + "/outputVerif/outputVerif2"
+
+        if not os.path.exists(outputDir2):
+            os.mkdir(outputDir2)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
@@ -644,16 +664,18 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 3')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        sphereDir = self.localPath + "/sphere"
         degree = 5
         maxIter = 1000
         properties = "C.txt,S.txt"
         propertiesValues = "0.5,0.25"
-        outputDir3 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest3"
+        outputDir3 = self.localPath + "/outputTest/outputTest3"
+        outputVerif3 = self.localPath + "/outputVerif/outputVerif3"
 
-        outputVerif3 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif3"
+        if not os.path.exists(outputDir3):
+            os.mkdir(outputDir3)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
@@ -673,16 +695,17 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 4')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        landmarkDir = self.localPath + "/landmark"
+        sphereDir = self.localPath + "/sphere"
         degree = 18
         maxIter = 1000
+        outputDir4 = self.localPath + "/outputTest/outputTest4"
+        outputVerif4 = self.localPath + "/outputVerif/outputVerif4"
 
-        outputDir4 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest4"
-
-        outputVerif4 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif4"
+        if not os.path.exists(outputDir4):
+            os.mkdir(outputDir4)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
@@ -701,18 +724,19 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 5')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
-        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        sphereDir = self.localPath + "/sphere"
+        landmarkDir = self.localPath + "/landmark"
         degree = 5
         maxIter = 1000
         properties = "DPhi.txt,C.txt,S.txt,Kappa1.txt"
         propertiesValues = "0.1,0.3"
+        outputDir5 = self.localPath + "/outputTest/outputTest5"
+        outputVerif5 = self.localPath + "/outputVerif/outputVerif5"
 
-        outputDir5 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest5"
-
-        outputVerif5 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif5"
+        if not os.path.exists(outputDir5):
+            os.mkdir(outputDir5)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
@@ -732,17 +756,17 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.delayDisplay('Start test 6')
 
         ## --- Prepare parameters --- ##
-        meshDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/Mesh"
-        propertiesDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/attributes"
-        sphereDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/sphere"
-        landmarkDir = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/landmark"
-
+        meshDir = self.localPath + "/Mesh"
+        propertiesDir = self.localPath + "/attributes"
+        sphereDir = self.localPath + "/sphere"
+        landmarkDir = self.localPath + "/landmark"
         properties = "C.txt,S.txt"
         propertiesValues = "0.5,0.25"
+        outputDir6 = self.localPath + "/outputTest/outputTest6"
+        outputVerif6 = self.localPath + "/outputVerif/outputVerif6"
 
-        outputDir6 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputTest/outputTest6"
-
-        outputVerif6 = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/outputVerif/outputVerif6"
+        if not os.path.exists(outputDir6):
+            os.mkdir(outputDir6)
 
         ## --- Call the CLI --- ##
         # logic = GroupsLogic()
