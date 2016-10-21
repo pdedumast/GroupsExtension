@@ -565,14 +565,10 @@ class GroupsTest(ScriptedLoadableModuleTest):
         self.initialPath = "/Users/prisgdd/Documents/Projects/GroupsExtension/dataTest/"
         self.localPath = slicer.app.temporaryPath + "/dataTest"
 
-
         if os.path.isdir(self.localPath):
             shutil.rmtree(self.localPath)
 
         shutil.copytree(self.initialPath, self.localPath)
-
-        if os.path.isdir(self.localPath):
-            print os.listdir(self.localPath)
 
     def runTest(self):
         """Run as few or as many tests as needed here.
