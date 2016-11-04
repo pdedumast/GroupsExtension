@@ -6,7 +6,6 @@ import logging
 
 import shutil
 
-
 #
 # Groups
 #
@@ -23,13 +22,11 @@ class Groups(ScriptedLoadableModule):
         self.parent.dependencies = []
         self.parent.contributors = ["Priscille de Dumast (University of Michigan), Ilwoo Lyu (UNC), Hamid Ali (UNC)"]
         self.parent.helpText = """
-    This is an example of scripted loadable module bundled in an extension.
-    It performs a simple thresholding on the input volume and optionally captures a screenshot.
+        ...
     """
         self.parent.acknowledgementText = """
-    This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-    and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
-"""  # replace with organization, grant and thanks.
+        ...
+    """  # replace with organization, grant and thanks.
 
 
 #
@@ -68,7 +65,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Selection of the input directory containing the property files from SPHARM (txt files) (option: --propertyDir)
         self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
-        self.ioQFormLayout.addRow(qt.QLabel("Input Property directory:"), self.inputPropertyDirectorySelector)
+        self.ioQFormLayout.addRow(qt.QLabel("Input Property Directory:"), self.inputPropertyDirectorySelector)
 
         # Selection of the directory which contains each spherical model (option: --sphereDir)
         self.sphericalModelsDirectorySelector = ctk.ctkDirectoryButton()
@@ -76,7 +73,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Selection of the output directory for Groups (option: --outputDir)
         self.outputDirectorySelector = ctk.ctkDirectoryButton()
-        self.ioQFormLayout.addRow(qt.QLabel("Output directory:"), self.outputDirectorySelector)
+        self.ioQFormLayout.addRow(qt.QLabel("Output Directory:"), self.outputDirectorySelector)
 
         # CheckBox. If checked, Group Box 'Parameters' will be enabled
         self.enableParamCB = ctk.ctkCheckBox()
@@ -178,7 +175,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
 
-        # Selection of the directory which contains each spherical model (option: --landmarkDir)            ## !!!!!!!!!!!
+        # Selection of the directory which contains (option: --landmarkDir)
         self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
         self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
 
@@ -211,6 +208,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.applyButton.enabled = False
         self.ioQVBox.addWidget(self.applyButton)
 
+        self.errorLabel = qt.QLabel("Error: Invalide inputs")
+        self.errorLabel.hide()
+        self.errorLabel.setStyleSheet("color: rgb(255, 0, 0);")
+        self.ioQVBox.addWidget(self.errorLabel)
+
+
         # Connections
         self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
 
@@ -219,14 +222,14 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
         #### SET PARAMETERS - for test!!
-        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
-        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
-        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
-
-        # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
-        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
-        self.degreeSpharm.value = 10
-        self.maxIter.value = 5
+        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
+        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
+        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
+        #
+        # # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
+        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
+        # self.degreeSpharm.value = 10
+        # self.maxIter.value = 5
 
     ## Function cleanup(self):
     def cleanup(self):
@@ -245,6 +248,9 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Check if each directory has been choosen
         self.applyButton.enabled = self.modelsDirectory != "." and self.propertyDirectory != "." and self.outputDirectory != "." and self.sphereDirectory != "."
+
+        # Hide error message if printed
+        self.errorLabel.hide()
 
     ## Function onSpecifyPropertyChanged(self):
     # Enable/Disable associated weights
@@ -295,7 +301,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
         if not self.enableParamCB.checkState():
-            logic.runGroups(modelsDir=self.modelsDirectory, propertyDir=self.propertyDirectory, sphereDir=self.sphereDirectory, outputDir=self.outputDirectory)
+            endGroup = logic.runGroups(modelsDir=self.modelsDirectory, propertyDir=self.propertyDirectory, sphereDir=self.sphereDirectory, outputDir=self.outputDirectory)
 
         else:
             # ----- Creation of string for the specified properties and their values ----- #
@@ -374,9 +380,13 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             d = int(self.degreeSpharm.value)
             m = int(self.maxIter.value)
 
-            logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory,
-                            sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property,
-                            propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
+            endGroup = logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory,
+                                    sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property,
+                                    propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
+
+        ## Groups didn't run because of invalid inputs
+        if not endGroup:
+            self.errorLabel.show()
 
 #
 # GroupsLogic
@@ -534,7 +544,7 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         ############################
         # ----- Call the CLI ----- #
         self.process = qt.QProcess()
-        # self.process.setProcessChannelMode(qt.QProcess.MergedChannels)
+        self.process.setProcessChannelMode(qt.QProcess.MergedChannels)
 
         # print "Calling " + os.path.basename(groups)
         self.process.start(groups, arguments)
@@ -543,8 +553,13 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         self.process.waitForFinished(-1)
         # print "error: " + str(self.process.error())
 
-        # processOutput = self.process.readAll()
-        # print "processOutput : " + str(processOutput)
+        processOutput = str(self.process.readAll())
+        sizeProcessOutput = len(processOutput)
+
+        finStr = processOutput[sizeProcessOutput - 10:sizeProcessOutput]
+        print "finStr : " + finStr
+        if finStr == "All done!":
+            return False
 
         return True
 

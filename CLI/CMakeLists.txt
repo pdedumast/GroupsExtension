@@ -1,1 +1,1 @@
-add_subdirectory(Groups)
+add_subdirectory(GROUPS)
