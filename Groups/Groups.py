@@ -18,7 +18,7 @@ class Groups(ScriptedLoadableModule):
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = "Groups"  # TODO make this more human readable by adding spaces
-        self.parent.categories = ["Correspondence"]
+        self.parent.categories = ["Quantification"]
         self.parent.dependencies = []
         self.parent.contributors = ["Priscille de Dumast (University of Michigan), Ilwoo Lyu (UNC), Hamid Ali (UNC)"]
         self.parent.helpText = """
@@ -102,7 +102,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
         # Selection of the property we want to use (option: --filter)
         self.specifyPropertySelector = ctk.ctkCheckableComboBox()
-        self.specifyPropertySelector.addItems(("C","H","Kappa1","S","K","Kappa2","DPhi","DTheta"))
+        self.specifyPropertySelector.addItems(("medialMeshArea","medialMeshPartialArea","medialMeshRadius","medialMeshPartialRadius","paraPhi","paraTheta"))
         self.paramQFormLayout.addRow(qt.QLabel("Properties name to use:"), self.specifyPropertySelector)
 
         # Weights of each property - Choices on 3 lines (option: -w)
@@ -115,69 +115,51 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.weightLayout.addLayout(self.weightline3)
 
         # Fill out first line
-        self.labelC = qt.QLabel("C")
-        self.weightline1.addWidget(self.labelC)
-        self.weightC = ctk.ctkDoubleSpinBox()
-        self.weightC.enabled = False
-        self.weightC.value = 1
-        self.weightline1.addWidget(self.weightC)
+        self.labelArea = qt.QLabel("medialMeshArea")
+        self.weightline1.addWidget(self.labelArea)
+        self.weightArea = ctk.ctkDoubleSpinBox()
+        self.weightArea.enabled = False
+        self.weightArea.value = 1
+        self.weightline1.addWidget(self.weightArea)
 
-        self.labelH = qt.QLabel("H")
-        self.weightline1.addWidget(self.labelH)
-        self.weightH = ctk.ctkDoubleSpinBox()
-        self.weightH.enabled = False
-        self.weightH.value = 1
-        self.weightline1.addWidget(self.weightH)
-
-        self.labelKappa1 = qt.QLabel("Kappa1")
-        self.weightline1.addWidget(self.labelKappa1)
-        self.weightKappa1 = ctk.ctkDoubleSpinBox()
-        self.weightKappa1.enabled = False
-        self.weightKappa1.value = 1
-        self.weightline1.addWidget(self.weightKappa1)
+        self.labelPartialArea = qt.QLabel("medialMeshPartialArea")
+        self.weightline1.addWidget(self.labelPartialArea)
+        self.weightPartialArea = ctk.ctkDoubleSpinBox()
+        self.weightPartialArea.enabled = False
+        self.weightPartialArea.value = 1
+        self.weightline1.addWidget(self.weightPartialArea)
 
         # Fill out second line
-        self.labelS = qt.QLabel("S")
-        self.weightline2.addWidget(self.labelS)
-        self.weightS = ctk.ctkDoubleSpinBox()
-        self.weightS.enabled = False
-        self.weightS.value = 1
-        self.weightline2.addWidget(self.weightS)
+        self.labelRadius = qt.QLabel("medialMeshRadius")
+        self.weightline2.addWidget(self.labelRadius)
+        self.weightRadius = ctk.ctkDoubleSpinBox()
+        self.weightRadius.enabled = False
+        self.weightRadius.value = 1
+        self.weightline2.addWidget(self.weightRadius)
 
-        self.labelK = qt.QLabel("K")
-        self.weightline2.addWidget(self.labelK)
-        self.weightK = ctk.ctkDoubleSpinBox()
-        self.weightK.enabled = False
-        self.weightK.value = 1
-        self.weightline2.addWidget(self.weightK)
-
-        self.labelKappa2 = qt.QLabel("Kappa2")
-        self.weightline2.addWidget(self.labelKappa2)
-        self.weightKappa2 = ctk.ctkDoubleSpinBox()
-        self.weightKappa2.enabled = False
-        self.weightKappa2.value = 1
-        self.weightline2.addWidget(self.weightKappa2)
+        self.labelPartialRadius = qt.QLabel("medialMeshPartialRadius")
+        self.weightline2.addWidget(self.labelPartialRadius)
+        self.weightPartialRadius = ctk.ctkDoubleSpinBox()
+        self.weightPartialRadius.enabled = False
+        self.weightPartialRadius.value = 1
+        self.weightline2.addWidget(self.weightPartialRadius)
 
         # Fill out third line
-        self.labelDPhi = qt.QLabel("DPhi")
-        self.weightline3.addWidget(self.labelDPhi)
-        self.weightDPhi = ctk.ctkDoubleSpinBox()
-        self.weightDPhi.enabled = False
-        self.weightDPhi.value = 1
-        self.weightline3.addWidget(self.weightDPhi)
+        self.labelparaPhi = qt.QLabel("paraPhi")
+        self.weightline3.addWidget(self.labelparaPhi)
+        self.weightparaPhi = ctk.ctkDoubleSpinBox()
+        self.weightparaPhi.enabled = False
+        self.weightparaPhi.value = 1
+        self.weightline3.addWidget(self.weightparaPhi)
 
-        self.labelDTheta = qt.QLabel("DTheta")
-        self.weightline3.addWidget(self.labelDTheta)
-        self.weightDTheta = ctk.ctkDoubleSpinBox()
-        self.weightDTheta.enabled = False
-        self.weightDTheta.value = 1
-        self.weightline3.addWidget(self.weightDTheta)
+        self.labelparaTheta = qt.QLabel("paraTheta")
+        self.weightline3.addWidget(self.labelparaTheta)
+        self.weightparaTheta = ctk.ctkDoubleSpinBox()
+        self.weightparaTheta.enabled = False
+        self.weightparaTheta.value = 1
+        self.weightline3.addWidget(self.weightparaTheta)
 
         self.paramQFormLayout.addRow("Weight of each property:", self.weightLayout)
-
-        # Selection of the directory which contains (option: --landmarkDir)
-        self.landmarkDirectorySelector = ctk.ctkDirectoryButton()
-        self.paramQFormLayout.addRow(qt.QLabel("Landmark Directory:"), self.landmarkDirectorySelector)
 
         # Specification of the SPHARM decomposition degree (option: -d)
         self.degreeSpharm = ctk.ctkSliderWidget()
@@ -222,14 +204,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
         #### SET PARAMETERS - for test!!
-        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/Mesh"
-        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/attributes"
-        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/OUTPUTGROUPS"
-        #
-        # # self.landmarkDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/landmark"
-        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/sphere"
-        # self.degreeSpharm.value = 10
-        # self.maxIter.value = 5
+        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/Mesh"
+        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/attributes"
+        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/outputGroups"
+        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/sphere"
+        self.degreeSpharm.value = 15
+        self.maxIter.value = 1000
 
     ## Function cleanup(self):
     def cleanup(self):
@@ -256,28 +236,22 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     # Enable/Disable associated weights
     def onSpecifyPropertyChanged(self):
         if self.specifyPropertySelector.currentIndex == 0:
-            self.weightC.enabled = not self.weightC.enabled
+            self.weightArea.enabled = not self.weightArea.enabled
 
         if self.specifyPropertySelector.currentIndex == 1:
-            self.weightH.enabled = not self.weightH.enabled
+            self.weightPartialArea.enabled = not self.weightPartialArea.enabled
 
         if self.specifyPropertySelector.currentIndex == 2:
-            self.weightKappa1.enabled = not self.weightKappa1.enabled
+            self.weightRadius.enabled = not self.weightRadius.enabled
 
         if self.specifyPropertySelector.currentIndex == 3:
-            self.weightS.enabled = not self.weightS.enabled
+            self.weightPartialRadius.enabled = not self.weightPartialRadius.enabled
 
         if self.specifyPropertySelector.currentIndex == 4:
-            self.weightK.enabled = not self.weightK.enabled
+            self.weightparaPhi.enabled = not self.weightparaPhi.enabled
 
         if self.specifyPropertySelector.currentIndex == 5:
-            self.weightKappa2.enabled = not self.weightKappa2.enabled
-
-        if self.specifyPropertySelector.currentIndex == 6:
-            self.weightDPhi.enabled = not self.weightDPhi.enabled
-
-        if self.specifyPropertySelector.currentIndex == 7:
-            self.weightDTheta.enabled = not self.weightDTheta.enabled
+            self.weightparaTheta.enabled = not self.weightparaTheta.enabled
 
     ## Function onCheckBoxParam(self):
     # Enable the parameter Group Box if associated check box is checked
@@ -308,81 +282,60 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             self.property = ""
             self.propertyValue = ""
 
-            if self.weightC.enabled:
-                self.propertyValue = self.propertyValue + str(self.weightC.value)
-                self.property = self.property + "C.txt"
+            if self.weightArea.enabled:
+                self.propertyValue = self.propertyValue + str(self.weightArea.value)
+                self.property = self.property + "medialMeshArea.txt"
 
-            if self.weightH.enabled:
+            if self.weightPartialArea.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightH.value)
-                self.property = self.property + "H.txt"
+                self.propertyValue = self.propertyValue + str(self.weightPartialArea.value)
+                self.property = self.property + "medialMeshPartialArea.txt"
 
-            if self.weightKappa1.enabled:
+            if self.weightRadius.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightKappa1.value)
-                self.property = self.property + "Kappa1.txt"
+                self.propertyValue = self.propertyValue + str(self.weightRadius.value)
+                self.property = self.property + "medialMeshRadius.txt"
 
-            if self.weightS.enabled:
+            if self.weightPartialRadius.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightS.value)
-                self.property = self.property + "S.txt"
+                self.propertyValue = self.propertyValue + str(self.weightPartialRadius.value)
+                self.property = self.property + "medialMeshPartialRadius.txt"
 
-            if self.weightK.enabled:
+            if self.weightparaPhi.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightK.value)
-                self.property = self.property + "K.txt"
+                self.propertyValue = self.propertyValue + str(self.weightparaPhi.value)
+                self.property = self.property + "paraPhi.txt"
 
-            if self.weightKappa2.enabled:
+            if self.weightparaTheta.enabled:
                 if self.propertyValue != "":
                     self.propertyValue = self.propertyValue + ","
                     self.property = self.property + ","
 
-                self.propertyValue = self.propertyValue + str(self.weightKappa2.value)
-                self.property = self.property + "Kappa2.txt"
-
-            if self.weightDPhi.enabled:
-                if self.propertyValue != "":
-                    self.propertyValue = self.propertyValue + ","
-                    self.property = self.property + ","
-
-                self.propertyValue = self.propertyValue + str(self.weightDPhi.value)
-                self.property = self.property + "DPhi.txt"
-
-            if self.weightDTheta.enabled:
-                if self.propertyValue != "":
-                    self.propertyValue = self.propertyValue + ","
-                    self.property = self.property + ","
-
-                self.propertyValue = self.propertyValue + str(self.weightDTheta.value)
-                self.property = self.property + "DTheta.txt"
+                self.propertyValue = self.propertyValue + str(self.weightparaTheta.value)
+                self.property = self.property + "paraTheta.txt"
 
             if self.property == "" and self.propertyValue == "":                         # Si aucune propriete selectionnee
                 self.property = 0
                 self.propertyValue = 0
-
-            if self.landmarkDirectorySelector.directory == ".":
-                landmark = 0
-            else:
-                landmark = str(self.landmarkDirectorySelector.directory)
 
             d = int(self.degreeSpharm.value)
             m = int(self.maxIter.value)
 
             endGroup = logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory,
                                     sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property,
-                                    propValues = self.propertyValue, landmark = landmark, degree = d, maxIter = m)
+                                    propValues = self.propertyValue, degree = d, maxIter = m)
 
         ## Groups didn't run because of invalid inputs
         if not endGroup:
@@ -406,7 +359,7 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
     #   Check if directories are ok
     #   Create the command line
     #   Call the CLI Groups
-    def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, properties=0, propValues=0, landmark=0, degree=0, maxIter=0):
+    def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, properties=0, propValues=0, degree=0, maxIter=0):
         print "--- function runGroups() ---"
 
         """
@@ -418,7 +371,6 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
              --outputDir: Output directory
              --filter: Properties to consider
              -w: weights associated with each property
-             --landmarkDir: Landmark folder
              -d: Degree of deformation field
              --maxIter: Maximum number of iteration
         """
@@ -429,8 +381,8 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
         #       Mesh: [name].vtk
         #       Properties: 8 x [name].vtk.[prop].txt
         #       Sphere: [name].txt.vtk
-        #       landmark: [name].txt
-
+# if file[len(file)-len(suffixSphere):] == suffixSphere:
+        
 
         ## Preparation of the reference list (from modelsDir)
         listModelsDir = os.listdir(modelsDir)
@@ -439,55 +391,87 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
             listModelsDir.remove(".DS_Store")
         if not len(listModelsDir):
             return False
+
+
         # Get the list of all basename + check if they are all vtk files
         for i in range(0, len(listModelsDir)):
-            extension = listModelsDir[i].split('.')[-1]
-            if extension == 'vtk':
-                listModelsName.append('.'.join(listModelsDir[i].split('.')[:-1]))
+            modelsExtension = "_surfSPHARM_procalign.vtk"
+            listModelsName.append( listModelsDir[i][:len(listModelsDir[i])-len(modelsExtension)] )
+            print "model num " + str(i) + " : " + listModelsName[i]
 
         ## Check other directories
         listPropertyDir = os.listdir(propertyDir)
         listPropertyName = list()
         if listPropertyDir.count(".DS_Store"):
             listPropertyDir.remove(".DS_Store")
-        # There should be 8 files for each one in modelsDir
-        listPropertyName = ['.'.join(file.split('.')[:-3]) for file in listPropertyDir]
+        # There should be 6 files for each one in modelsDir
+        for i in range(0, len(listPropertyDir)):
+            listPropertyName.append(str(('_').join(listPropertyDir[i].split('_')[:-2])))
         for file in listModelsName:
-            if listPropertyName.count(file) != 8:
+            if listPropertyName.count(file) != 6:
                 print "Properties. Not enough properties for " + str(file)
-                return False
+                return False        
+
 
         listSphereDir = os.listdir(sphereDir)
         listSphereName = list()
         if listSphereDir.count(".DS_Store"):
             listSphereDir.remove(".DS_Store")
         # There should be the same basename files
-        listSphereName = ['.'.join(file.split('.')[:-2]) for file in listSphereDir]
+        suffix = "_surf_para.vtk"
+        for i in range(0, len(listSphereDir)): 
+            end = listSphereDir[i][len(listSphereDir[i])-len(suffix):]
+            print end
+            if end == suffix:
+                print "suffix OK"
+                listSphereName.append('_'.join(listSphereDir[i].split('_')[:-2]))
+            else:
+                print "else suff"
+                listSphereName.append('_'.join(listSphereDir[i].split('_')[:-1]))
+            print "name sphare :: " + listSphereName[i]
+
         for file in listModelsName:
             if listSphereName.count(file) != 1:
                 print "Sphere. Wrong correspondence between name files " + str(file)
                 return False
 
-        if landmark:
-            listLandmarkDir = os.listdir(landmark)
-            if listLandmarkDir.count(".DS_Store"):
-                listLandmarkDir.remove(".DS_Store")
-            listLandmarkName = list()
-            ## In each directory there should be files with same basename as in the model repertory
-            listNameName = ['.'.join(file.split('.')[:-1]) for file in listLandmarkDir]
-            for file in listModelsName:
-                if listNameName.count(file) != 1:
-                    print "Landmark. Wrong correspondence between name files " + str(file)
-                    return False
+        # Get the list of all basename + check if they are all vtk files
+        # for i in range(0, len(listModelsDir)):
+        #     extension = listModelsDir[i].split('.')[-1]
+        #     if extension == 'vtk':
+        #         listModelsName.append('.'.join(listModelsDir[i].split('.')[:-1]))
+
+        # ## Check other directories
+        # listPropertyDir = os.listdir(propertyDir)
+        # listPropertyName = list()
+        # if listPropertyDir.count(".DS_Store"):
+        #     listPropertyDir.remove(".DS_Store")
+        # # There should be 8 files for each one in modelsDir
+        # listPropertyName = ['.'.join(file.split('.')[:-3]) for file in listPropertyDir]
+        # for file in listModelsName:
+        #     if listPropertyName.count(file) != 6:
+        #         print "Properties. Not enough properties for " + str(file)
+        #         return False
+
+        # listSphereDir = os.listdir(sphereDir)
+        # listSphereName = list()
+        # if listSphereDir.count(".DS_Store"):
+        #     listSphereDir.remove(".DS_Store")
+        # # There should be the same basename files
+        # listSphereName = ['.'.join(file.split('.')[:-2]) for file in listSphereDir]
+        # for file in listModelsName:
+        #     if listSphereName.count(file) != 1:
+        #         print "Sphere. Wrong correspondence between name files " + str(file)
+        #         return False
 
         ############################################
         # ----- Creation of the command line ----- #
 
-        # # Avec le make package
+        # Avec le make package
         # self.moduleName = "Groups"
         # scriptedModulesPath = eval('slicer.modules.%s.path' % self.moduleName.lower())
         # scriptedModulesPath = os.path.dirname(scriptedModulesPath)
-        #
+        
         # libPath = os.path.join(scriptedModulesPath)
         # sys.path.insert(0, libPath)
         # groups = os.path.join(scriptedModulesPath, '../hidden-cli-modules/Groups')
@@ -519,13 +503,9 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
             arguments.append(propValues)
         else:       # If no properties specified - Default: each property with weight=1
             arguments.append("--filter")
-            arguments.append("C.txt,H.txt,Kappa1.txt,S.txt,K.txt,Kappa2.txt,DPhi.txt,DTheta.txt")
+            arguments.append("medialMeshArea.txt,medialMeshPartialArea.txt,medialMeshRadius.txt,medialMeshPartialRadius.txt,paraPhi.txt,paraTheta.txt")
             arguments.append("-w")
-            arguments.append("1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0")
-
-        if landmark:
-            arguments.append("--landmarkDir")
-            arguments.append(landmark)
+            arguments.append("1.0,1.0,1.0,1.0,1.0,1.0")
 
         if degree:
             arguments.append("-d")
