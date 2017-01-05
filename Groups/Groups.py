@@ -20,7 +20,7 @@ class Groups(ScriptedLoadableModule):
         self.parent.title = "Groups"  # TODO make this more human readable by adding spaces
         self.parent.categories = ["Quantification"]
         self.parent.dependencies = []
-        self.parent.contributors = ["Priscille de Dumast (University of Michigan), Ilwoo Lyu (UNC), Hamid Ali (UNC)"]
+        self.parent.contributors = ["Priscille de Dumast (University of Michigan), Ilwoo Lyu (UNC)"]
         self.parent.helpText = """
         ...
     """
@@ -59,9 +59,15 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.ioQVBox.addWidget(self.directoryGroupBox)
         self.ioQFormLayout = qt.QFormLayout(self.directoryGroupBox)
 
-        # Selection of the directory containing the input models (option: --surfaceDir)
+        # Selection of the directory containing the input models (option: --surfaceDir) and option procalign shape
+        self.inputMeshTypeHBox = qt.QVBoxLayout(self.directoryGroupBox)
         self.inputModelsDirectorySelector = ctk.ctkDirectoryButton()
-        self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputModelsDirectorySelector)
+        self.chooseProcalign = ctk.ctkCheckBox()
+        self.chooseProcalign.setText("Procalign mesh")
+        
+        self.inputMeshTypeHBox.addWidget(self.inputModelsDirectorySelector)
+        self.inputMeshTypeHBox.addWidget(self.chooseProcalign)
+        self.ioQFormLayout.addRow(qt.QLabel("Input Models Directory:"), self.inputMeshTypeHBox)
 
         # Selection of the input directory containing the property files from SPHARM (txt files) (option: --propertyDir)
         self.inputPropertyDirectorySelector = ctk.ctkDirectoryButton()
@@ -195,7 +201,6 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.errorLabel.setStyleSheet("color: rgb(255, 0, 0);")
         self.ioQVBox.addWidget(self.errorLabel)
 
-
         # Connections
         self.applyButton.connect('clicked(bool)', self.onApplyButtonClicked)
 
@@ -204,12 +209,12 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
 
 
         #### SET PARAMETERS - for test!!
-        self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/Mesh"
-        self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/attributes"
-        self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/outputGroups"
-        self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/TestPipeline/inputGroups/sphere"
-        self.degreeSpharm.value = 15
-        self.maxIter.value = 1000
+        # self.inputModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Pipeline/inputGroupsPART/Mesh-surfSPHARM"
+        # self.inputPropertyDirectorySelector.directory = "/Users/prisgdd/Desktop/Pipeline/inputGroupsPART/attributes"
+        # self.outputDirectorySelector.directory = "/Users/prisgdd/Desktop/Example/outprout"
+        # self.sphericalModelsDirectorySelector.directory = "/Users/prisgdd/Desktop/Pipeline/inputGroupsPART/mapped-sphere"
+        # self.degreeSpharm.value = 4
+        # self.maxIter.value = 11
 
     ## Function cleanup(self):
     def cleanup(self):
@@ -268,6 +273,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
     def onApplyButtonClicked(self):
         logic = GroupsLogic()
 
+        self.errorLabel.hide()
         # Update names
         self.modelsDirectory = str(self.inputModelsDirectorySelector.directory)
         self.propertyDirectory = str(self.inputPropertyDirectorySelector.directory)
@@ -275,7 +281,7 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
         self.outputDirectory = str(self.outputDirectorySelector.directory)
 
         if not self.enableParamCB.checkState():
-            endGroup = logic.runGroups(modelsDir=self.modelsDirectory, propertyDir=self.propertyDirectory, sphereDir=self.sphereDirectory, outputDir=self.outputDirectory)
+            endGroup = logic.runGroups(modelsDir=self.modelsDirectory, propertyDir=self.propertyDirectory, sphereDir=self.sphereDirectory, outputDir=self.outputDirectory, procalign=self.chooseProcalign.checkState())
 
         else:
             # ----- Creation of string for the specified properties and their values ----- #
@@ -334,8 +340,8 @@ class GroupsWidget(ScriptedLoadableModuleWidget):
             m = int(self.maxIter.value)
 
             endGroup = logic.runGroups(modelsDir = self.modelsDirectory, propertyDir = self.propertyDirectory,
-                                    sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, properties = self.property,
-                                    propValues = self.propertyValue, degree = d, maxIter = m)
+                                    sphereDir = self.sphereDirectory, outputDir = self.outputDirectory, procalign=self.chooseProcalign.checkState(), 
+                                    properties = self.property, propValues = self.propertyValue, degree = d, maxIter = m)
 
         ## Groups didn't run because of invalid inputs
         if not endGroup:
@@ -359,7 +365,7 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
     #   Check if directories are ok
     #   Create the command line
     #   Call the CLI Groups
-    def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, properties=0, propValues=0, degree=0, maxIter=0):
+    def runGroups(self, modelsDir, propertyDir, sphereDir, outputDir, procalign=False, properties=0, propValues=0, degree=0, maxIter=0):
         print "--- function runGroups() ---"
 
         """
@@ -395,8 +401,12 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
 
         # Get the list of all basename + check if they are all vtk files
         for i in range(0, len(listModelsDir)):
-            modelsExtension = "_surfSPHARM_procalign.vtk"
+            if procalign:
+                modelsExtension = "_surfSPHARM_procalign.vtk"
+            else:
+                modelsExtension = "_surfSPHARM.vtk"
             listModelsName.append( listModelsDir[i][:len(listModelsDir[i])-len(modelsExtension)] )
+            print "heeeeeeee " + listModelsDir[i][:len(listModelsDir[i])-len(modelsExtension)]
             print "model num " + str(i) + " : " + listModelsName[i]
 
         ## Check other directories
@@ -423,12 +433,9 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
             end = listSphereDir[i][len(listSphereDir[i])-len(suffix):]
             print end
             if end == suffix:
-                print "suffix OK"
                 listSphereName.append('_'.join(listSphereDir[i].split('_')[:-2]))
             else:
-                print "else suff"
                 listSphereName.append('_'.join(listSphereDir[i].split('_')[:-1]))
-            print "name sphare :: " + listSphereName[i]
 
         for file in listModelsName:
             if listSphereName.count(file) != 1:
@@ -538,10 +545,14 @@ class GroupsLogic(ScriptedLoadableModuleLogic):
 
         finStr = processOutput[sizeProcessOutput - 10:sizeProcessOutput]
         print "finStr : " + finStr
-        if finStr == "All done!":
-            return False
 
-        return True
+        print "\n\n --------------------------- \n"
+        print processOutput
+        print "\n\n --------------------------- \n"
+        if finStr == "All done!\n":
+            return True
+
+        return False
 
 
 class GroupsTest(ScriptedLoadableModuleTest):
